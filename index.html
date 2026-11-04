@@ -1,0 +1,2253 @@
+<!DOCTYPE html>
+<html lang="zh-TW" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>健訓器材筆記本 Pro | 逐組記憶與休息計時</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Font Awesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <!-- Google Fonts: Inter & Noto Sans TC -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=Noto+Sans+TC:wght@400;500;700;900&display=swap" rel="stylesheet">
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Inter', 'Noto Sans TC', 'sans-serif'],
+                    },
+                    colors: {
+                        gym: {
+                            bg: '#090d14',
+                            card: '#131b26',
+                            border: '#243044',
+                            lime: '#a3e635',
+                            cyan: '#22d3ee',
+                            amber: '#fbbf24',
+                            rose: '#fb7185'
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        body {
+            background-color: #090d14;
+            color: #f8fafc;
+            -webkit-tap-highlight-color: transparent;
+        }
+        .no-scrollbar::-webkit-scrollbar {
+            display: none;
+        }
+        .no-scrollbar {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+        input[type="number"]::-webkit-inner-spin-button,
+        input[type="number"]::-webkit-outer-spin-button {
+            -webkit-appearance: none;
+            margin: 0;
+        }
+        input[type="number"] {
+            -moz-appearance: textfield;
+        }
+        .btn-active:active {
+            transform: scale(0.96);
+        }
+        @keyframes pulse-ring {
+            0%, 100% { box-shadow: 0 0 0 0 rgba(163, 230, 53, 0.6); }
+            50% { box-shadow: 0 0 0 10px rgba(163, 230, 53, 0); }
+        }
+        .timer-finished-alert {
+            animation: pulse-ring 1s infinite;
+            border-color: #a3e635 !important;
+            background-color: rgba(163, 230, 53, 0.15) !important;
+        }
+    </style>
+</head>
+<body class="min-h-screen pb-32 font-sans antialiased selection:bg-lime-400 selection:text-slate-950">
+
+    <!-- ==================== STICKY TOP HEADER & REST TIMER ==================== -->
+    <header class="sticky top-0 z-30 bg-[#090d14]/95 backdrop-blur-md border-b border-slate-800/80 shadow-xl">
+        <div class="max-w-3xl mx-auto px-3.5 py-2.5 space-y-2.5">
+            <!-- Row 1: App Title & Copy Daily Report -->
+            <div class="flex items-center justify-between">
+                <div class="flex items-center gap-2.5">
+                    <div class="w-9 h-9 rounded-xl bg-gradient-to-br from-lime-400 to-emerald-500 flex items-center justify-center text-slate-950 shadow-lg shadow-lime-500/20">
+                        <i class="fa-solid fa-dumbbell text-base"></i>
+                    </div>
+                    <div>
+                        <h1 class="text-base sm:text-lg font-black tracking-tight text-white flex items-center gap-2">
+                            健訓器材筆記本
+                            <span class="text-[10px] font-extrabold px-2 py-0.5 rounded-full bg-lime-400/15 text-lime-400 border border-lime-400/30">逐組記憶 Pro</span>
+                        </h1>
+                    </div>
+                </div>
+
+                <div class="flex items-center gap-2">
+                    <button onclick="openDailyReportModal()" class="btn-active text-xs font-bold px-3 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-lime-300 border border-slate-700 flex items-center gap-1.5 transition">
+                        <i class="fa-regular fa-copy"></i>
+                        <span>複製日報</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Row 2: Date Picker Bar (Supports Logging Past Workouts with Chinese Day of Week) -->
+            <div class="flex items-center justify-between bg-gym-card border border-gym-border rounded-xl p-1">
+                <button onclick="shiftDate(-1)" class="btn-active w-9 h-8 rounded-lg hover:bg-slate-800 text-slate-300 flex items-center justify-center transition" title="前一天">
+                    <i class="fa-solid fa-chevron-left text-xs"></i>
+                </button>
+                
+                <div class="flex items-center gap-2 flex-1 justify-center">
+                    <input type="date" id="datePicker" onchange="onDateChange(this.value)" 
+                        class="bg-transparent text-white font-bold text-xs sm:text-sm focus:outline-none cursor-pointer text-center">
+                    <span id="dayOfWeekBadge" class="text-xs font-extrabold px-2 py-0.5 rounded-md bg-lime-400/15 text-lime-300 border border-lime-400/30">
+                        星期三
+                    </span>
+                    <button id="backToTodayBtn" onclick="goToToday()" class="hidden text-[11px] font-bold px-2 py-0.5 rounded-md bg-amber-500/20 text-amber-300 border border-amber-500/40 hover:bg-amber-500/30 transition">
+                        回今天
+                    </button>
+                </div>
+
+                <button onclick="shiftDate(1)" class="btn-active w-9 h-8 rounded-lg hover:bg-slate-800 text-slate-300 flex items-center justify-center transition" title="後一天">
+                    <i class="fa-solid fa-chevron-right text-xs"></i>
+                </button>
+            </div>
+
+            <!-- Row 3: Smart Rest Timer Bar (組間休息計時器) -->
+            <div id="restTimerBar" class="bg-slate-900/95 border border-slate-800 rounded-xl p-2.5 transition-all duration-300">
+                <div class="flex flex-wrap items-center justify-between gap-2">
+                    <!-- Timer Display & Progress -->
+                    <div class="flex items-center gap-2.5">
+                        <div id="timerStatusIcon" class="w-8 h-8 rounded-lg bg-slate-800 text-amber-400 flex items-center justify-center text-sm">
+                            <i class="fa-solid fa-stopwatch"></i>
+                        </div>
+                        <div>
+                            <div class="flex items-center gap-1.5">
+                                <span class="text-[11px] font-bold text-slate-400">組間休息</span>
+                                <span id="timerStateBadge" class="text-[10px] font-bold px-1.5 py-0.2 rounded bg-slate-800 text-slate-400">待機中</span>
+                            </div>
+                            <div class="flex items-baseline gap-2">
+                                <span id="timerDisplay" class="font-mono text-xl sm:text-2xl font-black text-white tracking-wider">01:30</span>
+                                <div class="flex items-center gap-1">
+                                    <button onclick="adjustRestTimer(-15)" class="btn-active text-[11px] font-bold px-1.5 py-0.5 rounded bg-slate-800 hover:bg-slate-700 text-slate-300">-15s</button>
+                                    <button onclick="adjustRestTimer(15)" class="btn-active text-[11px] font-bold px-1.5 py-0.5 rounded bg-slate-800 hover:bg-slate-700 text-slate-300">+15s</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Quick Presets & Controls -->
+                    <div class="flex flex-wrap items-center gap-1.5 ml-auto">
+                        <div class="flex items-center gap-1 bg-slate-950 p-1 rounded-lg border border-slate-800">
+                            <button onclick="setRestPreset(60)" id="presetBtn-60" class="btn-active text-[11px] font-bold px-2 py-1 rounded text-slate-400 hover:text-white">60s</button>
+                            <button onclick="setRestPreset(90)" id="presetBtn-90" class="btn-active text-[11px] font-bold px-2 py-1 rounded bg-amber-400/20 text-amber-300 border border-amber-400/40">90s</button>
+                            <button onclick="setRestPreset(120)" id="presetBtn-120" class="btn-active text-[11px] font-bold px-2 py-1 rounded text-slate-400 hover:text-white">120s</button>
+                            <button onclick="setRestPreset(180)" id="presetBtn-180" class="btn-active text-[11px] font-bold px-2 py-1 rounded text-slate-400 hover:text-white">180s</button>
+                        </div>
+
+                        <button onclick="toggleRestTimer()" id="timerToggleBtn" class="btn-active px-3 py-1.5 rounded-lg bg-amber-400 hover:bg-amber-300 text-slate-950 font-black text-xs flex items-center gap-1 shadow">
+                            <i class="fa-solid fa-play" id="timerToggleIcon"></i>
+                            <span id="timerToggleText">開始</span>
+                        </button>
+                        <button onclick="resetRestTimer()" class="btn-active px-2.5 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold text-xs" title="重置計時器">
+                            <i class="fa-solid fa-rotate-right"></i>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Progress Bar & Auto-Start Checkbox -->
+                <div class="mt-2 flex items-center justify-between gap-3">
+                    <div class="flex-1 h-1.5 bg-slate-950 rounded-full overflow-hidden">
+                        <div id="timerProgressBar" class="h-full bg-gradient-to-r from-amber-400 to-lime-400 transition-all duration-300" style="width: 100%"></div>
+                    </div>
+                    <label class="flex items-center gap-1.5 text-[11px] text-slate-400 cursor-pointer select-none whitespace-nowrap">
+                        <input type="checkbox" id="autoStartTimerToggle" checked onchange="toggleAutoStartSetting(this.checked)"
+                            class="rounded bg-slate-800 border-slate-700 text-lime-400 focus:ring-0 cursor-pointer">
+                        <span>勾選完成單組時自動倒數</span>
+                    </label>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- ==================== MAIN CONTENT CONTAINER ==================== -->
+    <main class="max-w-3xl mx-auto px-3.5 pt-4 space-y-4">
+
+        <!-- Streak & Persistence Stats Banner -->
+        <section class="grid grid-cols-3 gap-2.5">
+            <div class="bg-gym-card border border-gym-border rounded-2xl p-3 flex flex-col justify-between">
+                <div class="flex items-center justify-between text-xs text-slate-400 font-medium">
+                    <span>持續訓練</span>
+                    <i class="fa-solid fa-fire text-amber-400 text-sm"></i>
+                </div>
+                <div class="mt-1 flex items-baseline gap-1">
+                    <span id="statStreakDays" class="text-2xl font-black text-amber-400">0</span>
+                    <span class="text-xs text-slate-400 font-semibold">天連續</span>
+                </div>
+                <p id="statLastTrainedHint" class="text-[11px] text-slate-500 mt-0.5 truncate">尚無紀錄</p>
+            </div>
+
+            <div class="bg-gym-card border border-gym-border rounded-2xl p-3 flex flex-col justify-between">
+                <div class="flex items-center justify-between text-xs text-slate-400 font-medium">
+                    <span>累積訓練</span>
+                    <i class="fa-solid fa-trophy text-lime-400 text-sm"></i>
+                </div>
+                <div class="mt-1 flex items-baseline gap-1">
+                    <span id="statTotalDays" class="text-2xl font-black text-white">0</span>
+                    <span class="text-xs text-slate-400 font-semibold">天</span>
+                </div>
+                <p id="statTotalLogsHint" class="text-[11px] text-slate-500 mt-0.5 truncate">共 0 筆動作</p>
+            </div>
+
+            <div class="bg-gym-card border border-gym-border rounded-2xl p-3 flex flex-col justify-between">
+                <div class="flex items-center justify-between text-xs text-slate-400 font-medium">
+                    <span>本週已練</span>
+                    <i class="fa-solid fa-calendar-check text-cyan-400 text-sm"></i>
+                </div>
+                <div class="mt-1 flex items-baseline gap-1">
+                    <span id="statWeekDays" class="text-2xl font-black text-cyan-400">0</span>
+                    <span class="text-xs text-slate-400 font-semibold">/ 7 天</span>
+                </div>
+                <p class="text-[11px] text-slate-500 mt-0.5 truncate">維持規律節奏</p>
+            </div>
+        </section>
+
+        <!-- Daily Summary Dashboard (Total Daily Reps + Sets + Volume + Cardio Mins) -->
+        <section class="bg-gradient-to-br from-slate-900 via-gym-card to-slate-900 border border-slate-800 rounded-2xl p-4 shadow-lg">
+            <div class="flex items-center justify-between mb-2.5">
+                <div class="flex items-center gap-2">
+                    <span class="w-2 h-2 rounded-full bg-lime-400 animate-pulse"></span>
+                    <h2 class="text-xs font-bold uppercase tracking-wider text-slate-300" id="summaryDateTitle">當日訓練總覽</h2>
+                </div>
+                <span class="text-xs text-slate-400 font-semibold" id="summaryEntryCount">0 項紀錄</span>
+            </div>
+
+            <div class="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
+                <!-- Total Daily Reps -->
+                <div class="bg-slate-950/80 border border-lime-500/30 rounded-xl p-3">
+                    <div class="text-[11px] font-bold text-lime-300 flex items-center gap-1">
+                        <i class="fa-solid fa-bolt"></i> 整天總健身次數
+                    </div>
+                    <div class="mt-1 flex items-baseline gap-1">
+                        <span id="dailyTotalReps" class="text-2xl font-black text-lime-400">0</span>
+                        <span class="text-xs text-slate-400">次 (總下數)</span>
+                    </div>
+                </div>
+
+                <!-- Total Sets -->
+                <div class="bg-slate-950/80 border border-slate-800 rounded-xl p-3">
+                    <div class="text-[11px] font-medium text-slate-400">重訓總組數</div>
+                    <div class="mt-1 flex items-baseline gap-1">
+                        <span id="dailyTotalSets" class="text-2xl font-black text-white">0</span>
+                        <span class="text-xs text-slate-400">組</span>
+                    </div>
+                </div>
+
+                <!-- Total Training Volume -->
+                <div class="bg-slate-950/80 border border-slate-800 rounded-xl p-3">
+                    <div class="text-[11px] font-medium text-slate-400">重訓總容量</div>
+                    <div class="mt-1 flex items-baseline gap-1">
+                        <span id="dailyTotalVolume" class="text-2xl font-black text-white">0</span>
+                        <span class="text-xs text-slate-400">kg</span>
+                    </div>
+                </div>
+
+                <!-- Total Cardio Duration -->
+                <div class="bg-slate-950/80 border border-cyan-500/30 rounded-xl p-3">
+                    <div class="text-[11px] font-bold text-cyan-300 flex items-center gap-1">
+                        <i class="fa-solid fa-heart-pulse"></i> 有氧總時長
+                    </div>
+                    <div class="mt-1 flex items-baseline gap-1">
+                        <span id="dailyTotalCardioMins" class="text-2xl font-black text-cyan-400">0</span>
+                        <span class="text-xs text-slate-400">分鐘</span>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Mode Switcher Tabs (重訓器材 / 有氧運動 / 歷史與備份) -->
+        <nav class="grid grid-cols-3 gap-2 bg-gym-card p-1.5 rounded-2xl border border-gym-border">
+            <button onclick="switchTab('strength')" id="tabBtn-strength"
+                class="btn-active py-2.5 px-3 rounded-xl font-bold text-sm flex items-center justify-center gap-2 transition bg-lime-400 text-slate-950 shadow-md">
+                <i class="fa-solid fa-dumbbell"></i>
+                <span>重訓器材</span>
+            </button>
+            <button onclick="switchTab('cardio')" id="tabBtn-cardio"
+                class="btn-active py-2.5 px-3 rounded-xl font-bold text-sm flex items-center justify-center gap-2 transition text-slate-300 hover:bg-slate-800">
+                <i class="fa-solid fa-person-running"></i>
+                <span>有氧運動</span>
+            </button>
+            <button onclick="switchTab('history')" id="tabBtn-history"
+                class="btn-active py-2.5 px-3 rounded-xl font-bold text-sm flex items-center justify-center gap-2 transition text-slate-300 hover:bg-slate-800">
+                <i class="fa-solid fa-chart-line"></i>
+                <span>歷史與備份</span>
+            </button>
+        </nav>
+
+        <!-- ==================== TAB 1: STRENGTH TRAINING (重訓逐組紀錄) ==================== -->
+        <section id="tabPanel-strength" class="space-y-4">
+            <div class="bg-gym-card border border-gym-border rounded-2xl p-4 sm:p-5 space-y-4">
+                <!-- Step 1: Select Equipment -->
+                <div class="flex items-center justify-between gap-2">
+                    <h3 class="text-sm font-bold text-slate-200 flex items-center gap-2">
+                        <i class="fa-solid fa-layer-group text-lime-400"></i>
+                        1. 選擇重訓器材
+                    </h3>
+                    <button onclick="openAddEquipmentModal('strength')" class="btn-active text-xs font-bold px-3 py-1.5 rounded-xl bg-lime-400/15 hover:bg-lime-400/25 text-lime-300 border border-lime-400/30 flex items-center gap-1 transition">
+                        <i class="fa-solid fa-plus"></i> 新增自訂器材
+                    </button>
+                </div>
+
+                <!-- Category Filter Pills -->
+                <div id="strengthCategoryBar" class="flex items-center gap-2 overflow-x-auto no-scrollbar pb-1"></div>
+
+                <!-- Equipment Chips Grid -->
+                <div id="strengthEquipmentGrid" class="grid grid-cols-2 sm:grid-cols-3 gap-2 max-h-48 overflow-y-auto pr-1"></div>
+
+                <!-- SMART MEMORY BANNER (上次各組明細記憶 & 最高重量) -->
+                <div id="strengthMemoryCard" class="rounded-2xl p-3.5 bg-slate-900/95 border border-slate-700/80 space-y-2"></div>
+
+                <!-- Step 2: Set-by-Set Independent Editor (逐組獨立調整) -->
+                <div class="space-y-3 pt-1">
+                    <div class="flex flex-wrap items-center justify-between gap-2">
+                        <div>
+                            <h4 class="text-sm font-extrabold text-white flex items-center gap-2">
+                                <i class="fa-solid fa-list-ol text-lime-400"></i>
+                                2. 逐組重量與次數調整
+                            </h4>
+                            <p class="text-[11px] text-slate-400">可針對單組微調（如最後一組力竭降次數），勾選「完成」自動啟動休息計時</p>
+                        </div>
+
+                        <!-- Bulk Quick Adjust Buttons -->
+                        <div class="flex flex-wrap items-center gap-1.5">
+                            <button type="button" onclick="bulkAdjustSets('weight', -2.5)" class="btn-active text-[11px] font-bold px-2.5 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-700">
+                                全組 -2.5kg
+                            </button>
+                            <button type="button" onclick="bulkAdjustSets('weight', 2.5)" class="btn-active text-[11px] font-bold px-2.5 py-1.5 rounded-lg bg-lime-400/15 hover:bg-lime-400/25 text-lime-300 border border-lime-400/30">
+                                全組 +2.5kg
+                            </button>
+                            <button type="button" onclick="bulkAdjustSets('reps', 1)" class="btn-active text-[11px] font-bold px-2.5 py-1.5 rounded-lg bg-lime-400/15 hover:bg-lime-400/25 text-lime-300 border border-lime-400/30">
+                                全組 +1下
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Dynamic Set Rows Container -->
+                    <div id="setBySetContainer" class="space-y-2.5"></div>
+
+                    <!-- Add / Remove Set Row Controls -->
+                    <div class="flex items-center gap-2 pt-1">
+                        <button type="button" onclick="addStrengthSetRow()"
+                            class="btn-active flex-1 py-2.5 px-4 rounded-xl bg-slate-900 hover:bg-slate-800 text-lime-300 border border-dashed border-lime-400/40 font-bold text-xs flex items-center justify-center gap-1.5 transition">
+                            <i class="fa-solid fa-plus"></i> 新增一組 (複製上一組數據)
+                        </button>
+                    </div>
+
+                    <!-- Notes & Quick Tags -->
+                    <div class="bg-slate-900/70 border border-slate-800 rounded-2xl p-3.5 space-y-2">
+                        <label class="text-xs font-bold text-slate-300 flex items-center gap-1.5">
+                            <i class="fa-regular fa-note-sticky text-lime-400"></i>
+                            器材設定 / 當日備註 (選填，下次會一併記憶提醒)
+                        </label>
+                        <input type="text" id="inputStrengthNote" placeholder="例如：椅墊高度 3 格、第 4 組力竭剩 10 下、下次挑戰加 2.5kg..."
+                            class="w-full bg-slate-950 border border-slate-800 focus:border-lime-400 rounded-xl py-2 px-3 text-sm text-white placeholder-slate-500 focus:outline-none">
+                        <div class="flex flex-wrap gap-1.5 pt-1">
+                            <button type="button" onclick="appendNoteTag('inputStrengthNote', '最後一組力竭')" class="text-[11px] px-2.5 py-1 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300">+ 最後一組力竭</button>
+                            <button type="button" onclick="appendNoteTag('inputStrengthNote', '感受度極佳')" class="text-[11px] px-2.5 py-1 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300">+ 感受度極佳</button>
+                            <button type="button" onclick="appendNoteTag('inputStrengthNote', '下次可加 2.5kg')" class="text-[11px] px-2.5 py-1 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300">+ 下次可加 2.5kg</button>
+                            <button type="button" onclick="appendNoteTag('inputStrengthNote', '椅墊 3 格')" class="text-[11px] px-2.5 py-1 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300">+ 椅墊 3 格</button>
+                        </div>
+                    </div>
+
+                    <!-- Live Calculation & Save Button -->
+                    <div class="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 pt-2">
+                        <div class="flex flex-wrap items-center gap-3 px-3.5 py-2.5 rounded-xl bg-slate-950 border border-slate-800/90">
+                            <div>
+                                <span class="text-[11px] text-slate-400 block">本動作總次數</span>
+                                <span id="liveItemTotalReps" class="text-base font-black text-lime-400">45 次</span>
+                            </div>
+                            <div class="h-6 w-px bg-slate-800"></div>
+                            <div>
+                                <span class="text-[11px] text-slate-400 block">本動作總容量</span>
+                                <span id="liveItemTotalVolume" class="text-base font-black text-white">1,800 kg</span>
+                            </div>
+                            <span id="weightProgressionBadge" class="hidden text-[11px] font-bold px-2 py-0.5 rounded-lg bg-amber-400/20 text-amber-300 border border-amber-400/40">
+                                🔥 重量突破
+                            </span>
+                            <span id="volumeProgressionBadge" class="hidden text-[11px] font-bold px-2 py-0.5 rounded-lg bg-lime-400/15 text-lime-300 border border-lime-400/30">
+                                📈 容量提升
+                            </span>
+                        </div>
+
+                        <button type="button" id="saveStrengthBtn" onclick="saveStrengthEntry()"
+                            class="btn-active flex-1 py-3.5 px-6 rounded-2xl bg-gradient-to-r from-lime-400 to-emerald-400 hover:from-lime-300 hover:to-emerald-300 text-slate-950 font-black text-base shadow-lg shadow-lime-500/20 flex items-center justify-center gap-2 transition">
+                            <i class="fa-solid fa-check-circle"></i>
+                            <span id="saveStrengthBtnText">儲存此器材訓練紀錄</span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- ==================== TAB 2: CARDIO TRAINING (有氧紀錄) ==================== -->
+        <section id="tabPanel-cardio" class="hidden space-y-4">
+            <div class="bg-gym-card border border-gym-border rounded-2xl p-4 sm:p-5 space-y-4">
+                <div class="flex items-center justify-between gap-2">
+                    <h3 class="text-sm font-bold text-slate-200 flex items-center gap-2">
+                        <i class="fa-solid fa-person-running text-cyan-400"></i>
+                        1. 選擇有氧器材
+                    </h3>
+                    <button onclick="openAddEquipmentModal('cardio')" class="btn-active text-xs font-bold px-3 py-1.5 rounded-xl bg-cyan-400/15 hover:bg-cyan-400/25 text-cyan-300 border border-cyan-400/30 flex items-center gap-1 transition">
+                        <i class="fa-solid fa-plus"></i> 新增有氧器材
+                    </button>
+                </div>
+
+                <!-- Cardio Equipment Grid -->
+                <div id="cardioEquipmentGrid" class="grid grid-cols-2 sm:grid-cols-3 gap-2"></div>
+
+                <!-- CARDIO SMART MEMORY BANNER -->
+                <div id="cardioMemoryCard" class="rounded-2xl p-3.5 bg-slate-900/95 border border-slate-700/80 space-y-2"></div>
+
+                <!-- Cardio Inputs: Incline (坡度), Speed (速度), Duration (時長) -->
+                <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-1">
+                    <!-- Incline (坡度 / 阻力) -->
+                    <div class="bg-slate-900/70 border border-slate-800 rounded-2xl p-3.5">
+                        <label class="text-xs font-bold text-slate-300 flex items-center gap-1.5 mb-2">
+                            <i class="fa-solid fa-mountain text-cyan-400"></i>
+                            坡度 / 阻力 (%)
+                        </label>
+                        <div class="flex items-center gap-1.5">
+                            <button type="button" onclick="adjustCardioVal('incline', -1)" class="btn-active px-2.5 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-xs font-bold text-slate-300 border border-slate-700">-1</button>
+                            <button type="button" onclick="adjustCardioVal('incline', -0.5)" class="btn-active px-2 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-xs font-bold text-slate-300 border border-slate-700">-0.5</button>
+                            <input type="number" id="inputIncline" step="0.5" min="0" value="5.0" oninput="updateCardioLivePreview()"
+                                class="w-full bg-slate-950 border border-slate-700 focus:border-cyan-400 rounded-xl py-2.5 px-1 text-center text-xl font-black text-white focus:outline-none">
+                            <button type="button" onclick="adjustCardioVal('incline', 0.5)" class="btn-active px-2 py-2.5 rounded-xl bg-cyan-400/15 hover:bg-cyan-400/25 text-xs font-bold text-cyan-300 border border-cyan-400/30">+0.5</button>
+                            <button type="button" onclick="adjustCardioVal('incline', 1)" class="btn-active px-2.5 py-2.5 rounded-xl bg-cyan-400/15 hover:bg-cyan-400/25 text-xs font-bold text-cyan-300 border border-cyan-400/30">+1</button>
+                        </div>
+                    </div>
+
+                    <!-- Speed (速度 km/h or 階數) -->
+                    <div class="bg-slate-900/70 border border-slate-800 rounded-2xl p-3.5">
+                        <label class="text-xs font-bold text-slate-300 flex items-center gap-1.5 mb-2">
+                            <i class="fa-solid fa-gauge-high text-cyan-400"></i>
+                            速度 (km/h 或階數)
+                        </label>
+                        <div class="flex items-center gap-1.5">
+                            <button type="button" onclick="adjustCardioVal('speed', -1)" class="btn-active px-2.5 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-xs font-bold text-slate-300 border border-slate-700">-1</button>
+                            <button type="button" onclick="adjustCardioVal('speed', -0.5)" class="btn-active px-2 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-xs font-bold text-slate-300 border border-slate-700">-0.5</button>
+                            <input type="number" id="inputSpeed" step="0.5" min="0" value="5.5" oninput="updateCardioLivePreview()"
+                                class="w-full bg-slate-950 border border-slate-700 focus:border-cyan-400 rounded-xl py-2.5 px-1 text-center text-xl font-black text-white focus:outline-none">
+                            <button type="button" onclick="adjustCardioVal('speed', 0.5)" class="btn-active px-2 py-2.5 rounded-xl bg-cyan-400/15 hover:bg-cyan-400/25 text-xs font-bold text-cyan-300 border border-cyan-400/30">+0.5</button>
+                            <button type="button" onclick="adjustCardioVal('speed', 1)" class="btn-active px-2.5 py-2.5 rounded-xl bg-cyan-400/15 hover:bg-cyan-400/25 text-xs font-bold text-cyan-300 border border-cyan-400/30">+1</button>
+                        </div>
+                    </div>
+
+                    <!-- Duration (時長 分鐘) -->
+                    <div class="bg-slate-900/70 border border-slate-800 rounded-2xl p-3.5">
+                        <label class="text-xs font-bold text-slate-300 flex items-center gap-1.5 mb-2">
+                            <i class="fa-regular fa-clock text-cyan-400"></i>
+                            時長 (分鐘)
+                        </label>
+                        <div class="flex items-center gap-1.5">
+                            <button type="button" onclick="adjustCardioVal('duration', -5)" class="btn-active px-2.5 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-xs font-bold text-slate-300 border border-slate-700">-5</button>
+                            <button type="button" onclick="adjustCardioVal('duration', -1)" class="btn-active px-2.5 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-xs font-bold text-slate-300 border border-slate-700">-1</button>
+                            <input type="number" id="inputDuration" step="1" min="1" value="30" oninput="updateCardioLivePreview()"
+                                class="w-full bg-slate-950 border border-slate-700 focus:border-cyan-400 rounded-xl py-2.5 px-1 text-center text-xl font-black text-white focus:outline-none">
+                            <button type="button" onclick="adjustCardioVal('duration', 1)" class="btn-active px-2.5 py-2.5 rounded-xl bg-cyan-400/15 hover:bg-cyan-400/25 text-xs font-bold text-cyan-300 border border-cyan-400/30">+1</button>
+                            <button type="button" onclick="adjustCardioVal('duration', 5)" class="btn-active px-2.5 py-2.5 rounded-xl bg-cyan-400/15 hover:bg-cyan-400/25 text-xs font-bold text-cyan-300 border border-cyan-400/30">+5</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Cardio Notes -->
+                <div class="bg-slate-900/70 border border-slate-800 rounded-2xl p-3.5 space-y-2">
+                    <label class="text-xs font-bold text-slate-300 flex items-center gap-1.5">
+                        <i class="fa-regular fa-note-sticky text-cyan-400"></i>
+                        有氧備註 (選填，例如心率區間、爬坡不扶手)
+                    </label>
+                    <input type="text" id="inputCardioNote" placeholder="例如：維持心率 135、重訓後爬坡快走..."
+                        class="w-full bg-slate-950 border border-slate-800 focus:border-cyan-400 rounded-xl py-2 px-3 text-sm text-white placeholder-slate-500 focus:outline-none">
+                </div>
+
+                <div class="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 pt-1">
+                    <div class="flex items-center justify-between sm:justify-start gap-3 px-3.5 py-2.5 rounded-xl bg-slate-950 border border-slate-800/90">
+                        <div>
+                            <span class="text-[11px] text-slate-400 block">本次有氧設定</span>
+                            <span id="liveCardioEstSub" class="text-sm font-bold text-cyan-300">坡度 5% · 速度 5.5 · 30 分鐘</span>
+                        </div>
+                        <span id="cardioProgressionBadge" class="hidden text-[11px] font-bold px-2 py-0.5 rounded-lg bg-cyan-400/15 text-cyan-300 border border-cyan-400/30">
+                            🔥 強度提升
+                        </span>
+                    </div>
+
+                    <button type="button" onclick="saveCardioEntry()"
+                        class="btn-active flex-1 py-3.5 px-6 rounded-2xl bg-gradient-to-r from-cyan-400 to-sky-400 hover:from-cyan-300 hover:to-sky-300 text-slate-950 font-black text-base shadow-lg shadow-cyan-500/20 flex items-center justify-center gap-2 transition">
+                        <i class="fa-solid fa-check-circle"></i>
+                        <span id="saveCardioBtnText">儲存有氧運動紀錄</span>
+                    </button>
+                </div>
+            </div>
+        </section>
+
+        <!-- ==================== TAB 3: HISTORY, PROGRESS & BACKUP (歷史與備份) ==================== -->
+        <section id="tabPanel-history" class="hidden space-y-4">
+            <div class="bg-gym-card border border-gym-border rounded-2xl p-4 sm:p-5 space-y-4">
+                <div class="flex items-center justify-between gap-2">
+                    <h3 class="text-sm font-bold text-white flex items-center gap-2">
+                        <i class="fa-solid fa-chart-simple text-lime-400"></i>
+                        各器材進步軌跡查詢
+                    </h3>
+                    <select id="historyEquipmentSelect" onchange="renderEquipmentHistoryProgress()"
+                        class="bg-slate-900 border border-slate-700 text-slate-200 text-xs font-bold rounded-xl px-3 py-2 focus:outline-none focus:border-lime-400">
+                    </select>
+                </div>
+                <div id="equipmentProgressTimeline" class="space-y-2 max-h-64 overflow-y-auto pr-1"></div>
+            </div>
+
+            <div class="bg-gym-card border border-gym-border rounded-2xl p-4 sm:p-5 space-y-3">
+                <h3 class="text-sm font-bold text-white flex items-center gap-2">
+                    <i class="fa-solid fa-calendar-days text-amber-400"></i>
+                    歷史訓練日誌總覽 (點擊日期可直接切換查看)
+                </h3>
+                <div id="allDatesHistoryList" class="space-y-2 max-h-72 overflow-y-auto pr-1"></div>
+            </div>
+
+            <div class="bg-gym-card border border-gym-border rounded-2xl p-4 sm:p-5 space-y-3">
+                <h3 class="text-sm font-bold text-white flex items-center gap-2">
+                    <i class="fa-solid fa-cloud-arrow-up text-cyan-400"></i>
+                    資料備份與還原 (支援 GitHub Pages 跨裝置攜帶)
+                </h3>
+                <p class="text-xs text-slate-400 leading-relaxed">
+                    所有器材的逐組記憶與歷史紀錄皆自動保存在瀏覽器 `localStorage` 中。您可隨時下載 JSON 備份檔保存或匯入至其他手機與電腦。
+                </p>
+                <div class="flex flex-wrap gap-2 pt-1">
+                    <button onclick="exportBackupJSON()" class="btn-active text-xs font-bold px-3.5 py-2.5 rounded-xl bg-lime-400/15 hover:bg-lime-400/25 text-lime-300 border border-lime-400/30 flex items-center gap-1.5">
+                        <i class="fa-solid fa-download"></i> 下載備份檔 (.json)
+                    </button>
+                    <label class="btn-active text-xs font-bold px-3.5 py-2.5 rounded-xl bg-cyan-400/15 hover:bg-cyan-400/25 text-cyan-300 border border-cyan-400/30 flex items-center gap-1.5 cursor-pointer">
+                        <i class="fa-solid fa-upload"></i> 匯入備份檔還原
+                        <input type="file" accept=".json" onchange="importBackupFile(event)" class="hidden">
+                    </label>
+                    <button onclick="openResetConfirmModal()" class="btn-active text-xs font-bold px-3.5 py-2.5 rounded-xl bg-rose-500/15 hover:bg-rose-500/25 text-rose-300 border border-rose-500/30 flex items-center gap-1.5 ml-auto">
+                        <i class="fa-solid fa-trash-can"></i> 重置為範例資料
+                    </button>
+                </div>
+            </div>
+        </section>
+
+        <!-- ==================== DAILY WORKOUT LOG LIST (當日已紀錄明細) ==================== -->
+        <section class="bg-gym-card border border-gym-border rounded-2xl p-4 sm:p-5 space-y-4">
+            <div class="flex items-center justify-between">
+                <div>
+                    <h3 class="text-base font-extrabold text-white flex items-center gap-2">
+                        <i class="fa-solid fa-clipboard-list text-lime-400"></i>
+                        <span id="dailyLogHeaderTitle">當日已儲存項目</span>
+                    </h3>
+                    <p class="text-xs text-slate-400 mt-0.5">點擊「編輯」可將該動作載回上方逐組修改，或點選產生純文字報表</p>
+                </div>
+                <button onclick="openDailyReportModal()" class="btn-active text-xs font-bold px-3 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-lime-300 border border-slate-700 flex items-center gap-1.5">
+                    <i class="fa-regular fa-file-lines"></i> 產生文字報表
+                </button>
+            </div>
+
+            <div id="dailyLogsContainer" class="space-y-3"></div>
+        </section>
+
+    </main>
+
+    <!-- ==================== MODAL: ADD NEW EQUIPMENT ==================== -->
+    <div id="addEquipmentModal" class="fixed inset-0 z-50 hidden bg-black/75 backdrop-blur-sm flex items-center justify-center p-4">
+        <div class="bg-gym-card border border-slate-700 rounded-2xl max-w-md w-full p-5 space-y-4 shadow-2xl">
+            <div class="flex items-center justify-between">
+                <h3 id="addModalTitle" class="text-base font-extrabold text-white">新增重訓器材</h3>
+                <button onclick="closeAddEquipmentModal()" class="w-8 h-8 rounded-lg bg-slate-800 text-slate-400 hover:text-white flex items-center justify-center">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+            </div>
+            <div class="space-y-3">
+                <div>
+                    <label class="text-xs font-bold text-slate-300 block mb-1">器材或動作名稱</label>
+                    <input type="text" id="newEquipName" placeholder="例如：哈克深蹲機、啞鈴上斜臥推..."
+                        class="w-full bg-slate-950 border border-slate-700 focus:border-lime-400 rounded-xl py-2.5 px-3 text-sm text-white focus:outline-none">
+                </div>
+                <div id="newEquipCategoryWrap">
+                    <label class="text-xs font-bold text-slate-300 block mb-1">部位分類</label>
+                    <select id="newEquipCategory" class="w-full bg-slate-950 border border-slate-700 focus:border-lime-400 rounded-xl py-2.5 px-3 text-sm text-white focus:outline-none">
+                        <option value="腿部">腿部</option>
+                        <option value="胸部">胸部</option>
+                        <option value="背部">背部</option>
+                        <option value="肩部">肩部</option>
+                        <option value="手臂">手臂</option>
+                        <option value="核心">核心</option>
+                    </select>
+                </div>
+            </div>
+            <div class="flex justify-end gap-2 pt-2">
+                <button onclick="closeAddEquipmentModal()" class="px-4 py-2 rounded-xl bg-slate-800 text-slate-300 text-xs font-bold">取消</button>
+                <button onclick="confirmAddEquipment()" class="px-5 py-2 rounded-xl bg-lime-400 text-slate-950 text-xs font-black">確認新增</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ==================== MODAL: DAILY TEXT REPORT (複製訓練日報) ==================== -->
+    <div id="dailyReportModal" class="fixed inset-0 z-50 hidden bg-black/75 backdrop-blur-sm flex items-center justify-center p-4">
+        <div class="bg-gym-card border border-slate-700 rounded-2xl max-w-md w-full p-5 space-y-4 shadow-2xl">
+            <div class="flex items-center justify-between">
+                <h3 class="text-base font-extrabold text-white flex items-center gap-2">
+                    <i class="fa-solid fa-clipboard-check text-lime-400"></i>
+                    訓練日報純文字匯出
+                </h3>
+                <button onclick="closeDailyReportModal()" class="w-8 h-8 rounded-lg bg-slate-800 text-slate-400 hover:text-white flex items-center justify-center">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+            </div>
+            <p class="text-xs text-slate-400">已自動整理當日星期、逐組次數與力竭標記、整天總健身次數與有氧數據，可直接複製貼到記事本或 LINE：</p>
+            <textarea id="dailyReportTextarea" rows="11" readonly
+                class="w-full bg-slate-950 border border-slate-800 rounded-xl p-3 text-xs sm:text-sm font-mono text-slate-200 focus:outline-none"></textarea>
+            <div class="flex justify-end gap-2">
+                <button onclick="closeDailyReportModal()" class="px-4 py-2.5 rounded-xl bg-slate-800 text-slate-300 text-xs font-bold">關閉</button>
+                <button onclick="copyDailyReportText()" class="btn-active px-5 py-2.5 rounded-xl bg-lime-400 hover:bg-lime-300 text-slate-950 text-xs font-black flex items-center gap-1.5">
+                    <i class="fa-regular fa-copy"></i> 一鍵複製文字
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ==================== MODAL: RESET CONFIRMATION ==================== -->
+    <div id="resetConfirmModal" class="fixed inset-0 z-50 hidden bg-black/75 backdrop-blur-sm flex items-center justify-center p-4">
+        <div class="bg-gym-card border border-slate-700 rounded-2xl max-w-sm w-full p-5 space-y-4 shadow-2xl">
+            <h3 class="text-base font-extrabold text-rose-400 flex items-center gap-2">
+                <i class="fa-solid fa-triangle-exclamation"></i> 確定要重置資料嗎？
+            </h3>
+            <p class="text-xs text-slate-300 leading-relaxed">
+                這將會清除目前瀏覽器內所有的自訂紀錄並恢復為預設範例狀態。建議先點選「下載備份檔」保存您的紀錄。
+            </p>
+            <div class="flex justify-end gap-2 pt-2">
+                <button onclick="closeResetConfirmModal()" class="px-4 py-2 rounded-xl bg-slate-800 text-slate-300 text-xs font-bold">取消</button>
+                <button onclick="confirmResetAllData()" class="px-4 py-2 rounded-xl bg-rose-500 text-white text-xs font-black">確定重置</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast Notification -->
+    <div id="toastContainer" class="fixed bottom-5 left-1/2 -translate-x-1/2 z-50 pointer-events-none transition-all duration-300 opacity-0 translate-y-2">
+        <div class="bg-slate-900/95 border border-lime-400/50 text-white px-4 py-2.5 rounded-2xl shadow-2xl flex items-center gap-2.5 text-xs sm:text-sm font-bold">
+            <i id="toastIcon" class="fa-solid fa-circle-check text-lime-400"></i>
+            <span id="toastMessage">已儲存紀錄！</span>
+        </div>
+    </div>
+
+    <!-- ==================== APPLICATION JAVASCRIPT ==================== -->
+    <script>
+        const STORAGE_KEY = 'GYM_NOTEBOOK_PRO_V2_SETBYSET';
+        const WEEKDAYS_ZH = ['星期日', '星期一', '星期二', '星期三', '星期四', '星期五', '星期六'];
+        const STRENGTH_CATEGORIES = ['全部', '腿部', '胸部', '背部', '肩部', '手臂', '核心'];
+
+        const DEFAULT_STRENGTH_EQUIPMENT = [
+            { id: 'eq_leg_press', name: '腿推機 (Leg Press)', category: '腿部', defaultWeight: 40, defaultReps: 15, defaultSets: 3 },
+            { id: 'eq_calf_press', name: '小腿推舉 (Calf Press)', category: '腿部', defaultWeight: 40, defaultReps: 15, defaultSets: 3 },
+            { id: 'eq_squat', name: '槓鈴深蹲 / 史密斯深蹲', category: '腿部', defaultWeight: 50, defaultReps: 10, defaultSets: 4 },
+            { id: 'eq_leg_ext', name: '坐姿腿部伸展機', category: '腿部', defaultWeight: 30, defaultReps: 12, defaultSets: 4 },
+            { id: 'eq_leg_curl', name: '坐姿腿後勾機', category: '腿部', defaultWeight: 25, defaultReps: 12, defaultSets: 3 },
+            { id: 'eq_chest_press', name: '坐姿機械胸推 / 槓鈴臥推', category: '胸部', defaultWeight: 40, defaultReps: 12, defaultSets: 4 },
+            { id: 'eq_pec_fly', name: '蝴蝶機夾胸', category: '胸部', defaultWeight: 25, defaultReps: 12, defaultSets: 3 },
+            { id: 'eq_lat_pulldown', name: '滑輪下拉機 (Lat Pulldown)', category: '背部', defaultWeight: 35, defaultReps: 12, defaultSets: 4 },
+            { id: 'eq_seated_row', name: '坐姿划船機', category: '背部', defaultWeight: 35, defaultReps: 12, defaultSets: 3 },
+            { id: 'eq_shoulder_press', name: '啞鈴肩推 / 機械肩推', category: '肩部', defaultWeight: 20, defaultReps: 12, defaultSets: 4 },
+            { id: 'eq_lateral_raise', name: '啞鈴側平舉', category: '肩部', defaultWeight: 6, defaultReps: 15, defaultSets: 3 },
+            { id: 'eq_bicep_curl', name: '二頭肌彎舉', category: '手臂', defaultWeight: 15, defaultReps: 12, defaultSets: 3 },
+            { id: 'eq_tricep_pushdown', name: '三頭繩索下壓', category: '手臂', defaultWeight: 15, defaultReps: 12, defaultSets: 3 },
+            { id: 'eq_ab_crunch', name: '機械捲腹機', category: '核心', defaultWeight: 25, defaultReps: 15, defaultSets: 3 }
+        ];
+
+        const DEFAULT_CARDIO_EQUIPMENT = [
+            { id: 'cd_treadmill', name: '跑步機 (坡度快走/慢跑)', defaultIncline: 5.0, defaultSpeed: 5.5, defaultDuration: 30 },
+            { id: 'cd_stairmaster', name: '爬梯機 (StairMaster)', defaultIncline: 1.0, defaultSpeed: 6.0, defaultDuration: 20 },
+            { id: 'cd_bike', name: '飛輪健身車', defaultIncline: 3.0, defaultSpeed: 22.0, defaultDuration: 30 },
+            { id: 'cd_elliptical', name: '橢圓交叉機', defaultIncline: 4.0, defaultSpeed: 6.5, defaultDuration: 30 },
+            { id: 'cd_rower', name: '室內划船機', defaultIncline: 4.0, defaultSpeed: 24.0, defaultDuration: 20 }
+        ];
+
+        // Application State
+        let state = {
+            selectedDate: getLocalTodayStr(),
+            activeTab: 'strength',
+            selectedCategory: '全部',
+            selectedStrengthId: 'eq_leg_press',
+            selectedCardioId: 'cd_treadmill',
+            editingEntryId: null,
+            addingModalType: 'strength',
+            autoStartTimerOnCheck: true,
+            // Current working sets in the Set-by-Set Editor: [{ weight, reps, isFailure, completed }]
+            workingSets: [],
+            strengthEquipment: [],
+            cardioEquipment: [],
+            logs: []
+        };
+
+        // Rest Timer State
+        let restTimer = {
+            presetSeconds: 90,
+            remainingSeconds: 90,
+            isRunning: false,
+            intervalId: null
+        };
+
+        // ==================== DATE & HELPER FUNCTIONS ====================
+        function getLocalTodayStr() {
+            const now = new Date();
+            const year = now.getFullYear();
+            const month = String(now.getMonth() + 1).padStart(2, '0');
+            const day = String(now.getDate()).padStart(2, '0');
+            return `${year}-${month}-${day}`;
+        }
+
+        function getLastFridayStr() {
+            const d = new Date();
+            const day = d.getDay();
+            const diff = (day >= 5) ? (day - 5 || 7) : (day + 2);
+            d.setDate(d.getDate() - diff);
+            const year = d.getFullYear();
+            const month = String(d.getMonth() + 1).padStart(2, '0');
+            const dt = String(d.getDate()).padStart(2, '0');
+            return `${year}-${month}-${dt}`;
+        }
+
+        function getChineseDayOfWeek(dateStr) {
+            if (!dateStr) return '';
+            const parts = dateStr.split('-');
+            const dt = new Date(Number(parts[0]), Number(parts[1]) - 1, Number(parts[2]));
+            return WEEKDAYS_ZH[dt.getDay()];
+        }
+
+        // Normalize legacy logs so every strength log always has `setDetails: [{weight, reps, isFailure, completed}]`
+        function normalizeStrengthLog(log) {
+            if (log.type !== 'strength') return log;
+            if (!Array.isArray(log.setDetails) || log.setDetails.length === 0) {
+                const count = Math.max(1, Number(log.sets) || 3);
+                const w = Number(log.weight) || 20;
+                const r = Number(log.reps) || 12;
+                log.setDetails = Array.from({ length: count }, () => ({
+                    weight: w,
+                    reps: r,
+                    isFailure: false,
+                    completed: true
+                }));
+            }
+            return log;
+        }
+
+        // Compute total reps, sets, max weight, and volume from a strength log
+        function getStrengthLogStats(log) {
+            const details = (log.setDetails && log.setDetails.length > 0)
+                ? log.setDetails
+                : [{ weight: Number(log.weight) || 0, reps: Number(log.reps) || 0, isFailure: false }];
+            let totalReps = 0;
+            let totalVolume = 0;
+            let maxWeight = 0;
+            details.forEach(s => {
+                const w = Number(s.weight) || 0;
+                const r = Number(s.reps) || 0;
+                totalReps += r;
+                totalVolume += w * r;
+                if (w > maxWeight) maxWeight = w;
+            });
+            return {
+                setsCount: details.length,
+                totalReps,
+                totalVolume: Math.round(totalVolume * 10) / 10,
+                maxWeight
+            };
+        }
+
+        // ==================== STORAGE & SEED DATA ====================
+        function loadState() {
+            try {
+                const raw = localStorage.getItem(STORAGE_KEY);
+                if (raw) {
+                    const parsed = JSON.parse(raw);
+                    state.strengthEquipment = parsed.strengthEquipment || DEFAULT_STRENGTH_EQUIPMENT;
+                    state.cardioEquipment = parsed.cardioEquipment || DEFAULT_CARDIO_EQUIPMENT;
+                    state.logs = (parsed.logs || []).map(normalizeStrengthLog);
+                    if (typeof parsed.autoStartTimerOnCheck === 'boolean') {
+                        state.autoStartTimerOnCheck = parsed.autoStartTimerOnCheck;
+                    }
+                } else {
+                    seedInitialSampleData();
+                }
+            } catch (e) {
+                console.error('Failed to read localStorage:', e);
+                seedInitialSampleData();
+            }
+        }
+
+        function seedInitialSampleData() {
+            state.strengthEquipment = JSON.parse(JSON.stringify(DEFAULT_STRENGTH_EQUIPMENT));
+            state.cardioEquipment = JSON.parse(JSON.stringify(DEFAULT_CARDIO_EQUIPMENT));
+            const lastFriday = getLastFridayStr();
+
+            state.logs = [
+                {
+                    id: 'sample_leg_press',
+                    date: lastFriday,
+                    type: 'strength',
+                    equipId: 'eq_leg_press',
+                    equipName: '腿推機 (Leg Press)',
+                    category: '腿部',
+                    setDetails: [
+                        { weight: 40, reps: 15, isFailure: false, completed: true },
+                        { weight: 40, reps: 15, isFailure: false, completed: true },
+                        { weight: 40, reps: 15, isFailure: false, completed: true }
+                    ],
+                    note: '椅墊高度 3 格，雙腳與肩同寬，下次可挑戰加重量',
+                    timestamp: Date.now() - 86400000 * 3
+                },
+                {
+                    id: 'sample_calf_press',
+                    date: lastFriday,
+                    type: 'strength',
+                    equipId: 'eq_calf_press',
+                    equipName: '小腿推舉 (Calf Press)',
+                    category: '腿部',
+                    setDetails: [
+                        { weight: 40, reps: 15, isFailure: false, completed: true },
+                        { weight: 40, reps: 15, isFailure: false, completed: true },
+                        { weight: 40, reps: 15, isFailure: false, completed: true }
+                    ],
+                    note: '頂峰收縮停頓 1 秒',
+                    timestamp: Date.now() - 86400000 * 3 + 1000
+                },
+                {
+                    id: 'sample_chest_press',
+                    date: lastFriday,
+                    type: 'strength',
+                    equipId: 'eq_chest_press',
+                    equipName: '坐姿機械胸推 / 槓鈴臥推',
+                    category: '胸部',
+                    setDetails: [
+                        { weight: 40, reps: 12, isFailure: false, completed: true },
+                        { weight: 40, reps: 12, isFailure: false, completed: true },
+                        { weight: 40, reps: 12, isFailure: false, completed: true },
+                        { weight: 40, reps: 10, isFailure: true, completed: true }
+                    ],
+                    note: '前三組 12 下，第 4 組力竭剩 10 下',
+                    timestamp: Date.now() - 86400000 * 3 + 2000
+                },
+                {
+                    id: 'sample_treadmill',
+                    date: lastFriday,
+                    type: 'cardio',
+                    equipId: 'cd_treadmill',
+                    equipName: '跑步機 (坡度快走/慢跑)',
+                    incline: 5.0,
+                    speed: 5.5,
+                    duration: 30,
+                    note: '重訓後有氧爬坡快走，維持微喘心率',
+                    timestamp: Date.now() - 86400000 * 3 + 3000
+                }
+            ];
+            saveState();
+        }
+
+        function saveState() {
+            try {
+                const payload = {
+                    strengthEquipment: state.strengthEquipment,
+                    cardioEquipment: state.cardioEquipment,
+                    logs: state.logs,
+                    autoStartTimerOnCheck: state.autoStartTimerOnCheck
+                };
+                localStorage.setItem(STORAGE_KEY, JSON.stringify(payload));
+            } catch (e) {
+                console.error('Failed to save state:', e);
+            }
+        }
+
+        // ==================== SMART REST TIMER & WEB AUDIO BEEP ====================
+        function formatTimeMMSS(totalSecs) {
+            const s = Math.max(0, Math.floor(totalSecs));
+            const mins = String(Math.floor(s / 60)).padStart(2, '0');
+            const secs = String(s % 60).padStart(2, '0');
+            return `${mins}:${secs}`;
+        }
+
+        function renderRestTimerUI() {
+            document.getElementById('timerDisplay').textContent = formatTimeMMSS(restTimer.remainingSeconds);
+            const pct = restTimer.presetSeconds > 0
+                ? Math.min(100, Math.max(0, (restTimer.remainingSeconds / restTimer.presetSeconds) * 100))
+                : 0;
+            document.getElementById('timerProgressBar').style.width = `${pct}%`;
+
+            // Highlight active preset button
+            [60, 90, 120, 180].forEach(sec => {
+                const btn = document.getElementById(`presetBtn-${sec}`);
+                if (!btn) return;
+                if (restTimer.presetSeconds === sec) {
+                    btn.className = 'btn-active text-[11px] font-bold px-2 py-1 rounded bg-amber-400/20 text-amber-300 border border-amber-400/40';
+                } else {
+                    btn.className = 'btn-active text-[11px] font-bold px-2 py-1 rounded text-slate-400 hover:text-white';
+                }
+            });
+
+            const toggleIcon = document.getElementById('timerToggleIcon');
+            const toggleText = document.getElementById('timerToggleText');
+            const stateBadge = document.getElementById('timerStateBadge');
+
+            if (restTimer.isRunning) {
+                toggleIcon.className = 'fa-solid fa-pause';
+                toggleText.textContent = '暫停';
+                stateBadge.textContent = '倒數中';
+                stateBadge.className = 'text-[10px] font-bold px-1.5 py-0.2 rounded bg-amber-400/20 text-amber-300';
+            } else if (restTimer.remainingSeconds === 0) {
+                toggleIcon.className = 'fa-solid fa-rotate-right';
+                toggleText.textContent = '再來';
+                stateBadge.textContent = '休息結束！準備開練';
+                stateBadge.className = 'text-[10px] font-extrabold px-1.5 py-0.2 rounded bg-lime-400 text-slate-950';
+            } else {
+                toggleIcon.className = 'fa-solid fa-play';
+                toggleText.textContent = '開始';
+                stateBadge.textContent = '待機中';
+                stateBadge.className = 'text-[10px] font-bold px-1.5 py-0.2 rounded bg-slate-800 text-slate-400';
+            }
+        }
+
+        function setRestPreset(seconds) {
+            clearRestTimerInterval();
+            restTimer.presetSeconds = seconds;
+            restTimer.remainingSeconds = seconds;
+            restTimer.isRunning = false;
+            document.getElementById('restTimerBar').classList.remove('timer-finished-alert');
+            renderRestTimerUI();
+            startRestTimer();
+        }
+
+        function adjustRestTimer(deltaSeconds) {
+            document.getElementById('restTimerBar').classList.remove('timer-finished-alert');
+            restTimer.remainingSeconds = Math.max(5, restTimer.remainingSeconds + deltaSeconds);
+            if (restTimer.remainingSeconds > restTimer.presetSeconds) {
+                restTimer.presetSeconds = restTimer.remainingSeconds;
+            }
+            renderRestTimerUI();
+        }
+
+        function toggleRestTimer() {
+            document.getElementById('restTimerBar').classList.remove('timer-finished-alert');
+            if (restTimer.isRunning) {
+                clearRestTimerInterval();
+                restTimer.isRunning = false;
+                renderRestTimerUI();
+            } else {
+                if (restTimer.remainingSeconds <= 0) {
+                    restTimer.remainingSeconds = restTimer.presetSeconds;
+                }
+                startRestTimer();
+            }
+        }
+
+        function startRestTimer() {
+            clearRestTimerInterval();
+            document.getElementById('restTimerBar').classList.remove('timer-finished-alert');
+            restTimer.isRunning = true;
+            renderRestTimerUI();
+
+            restTimer.intervalId = setInterval(() => {
+                if (restTimer.remainingSeconds > 0) {
+                    restTimer.remainingSeconds--;
+                    renderRestTimerUI();
+                }
+                if (restTimer.remainingSeconds <= 0) {
+                    clearRestTimerInterval();
+                    restTimer.isRunning = false;
+                    renderRestTimerUI();
+                    onRestTimerFinished();
+                }
+            }, 1000);
+        }
+
+        function resetRestTimer() {
+            clearRestTimerInterval();
+            restTimer.isRunning = false;
+            restTimer.remainingSeconds = restTimer.presetSeconds;
+            document.getElementById('restTimerBar').classList.remove('timer-finished-alert');
+            renderRestTimerUI();
+        }
+
+        function clearRestTimerInterval() {
+            if (restTimer.intervalId) {
+                clearInterval(restTimer.intervalId);
+                restTimer.intervalId = null;
+            }
+        }
+
+        function toggleAutoStartSetting(checked) {
+            state.autoStartTimerOnCheck = checked;
+            saveState();
+        }
+
+        function onRestTimerFinished() {
+            const bar = document.getElementById('restTimerBar');
+            bar.classList.add('timer-finished-alert');
+            playTimerBeepSound();
+            showToast('⏰ 組間休息結束！準備開始下一組！');
+            setTimeout(() => {
+                bar.classList.remove('timer-finished-alert');
+            }, 6000);
+        }
+
+        // Synthesize energetic 3-beep alarm using Web Audio API (no external audio files needed)
+        function playTimerBeepSound() {
+            try {
+                const AudioCtx = window.AudioContext || window.webkitAudioContext;
+                if (!AudioCtx) return;
+                const ctx = new AudioCtx();
+                const frequencies = [880, 880, 1174.66]; // A5, A5, D6
+                frequencies.forEach((freq, idx) => {
+                    const osc = ctx.createOscillator();
+                    const gain = ctx.createGain();
+                    osc.type = 'sine';
+                    osc.frequency.setValueAtTime(freq, ctx.currentTime + idx * 0.18);
+                    gain.gain.setValueAtTime(0.25, ctx.currentTime + idx * 0.18);
+                    gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + idx * 0.18 + 0.14);
+                    osc.connect(gain);
+                    gain.connect(ctx.destination);
+                    osc.start(ctx.currentTime + idx * 0.18);
+                    osc.stop(ctx.currentTime + idx * 0.18 + 0.15);
+                });
+            } catch (e) {
+                console.warn('AudioContext beep skipped:', e);
+            }
+        }
+
+        // ==================== DATE BAR & STREAK STATS ====================
+        function renderDateBar() {
+            document.getElementById('datePicker').value = state.selectedDate;
+            const dayName = getChineseDayOfWeek(state.selectedDate);
+            const todayStr = getLocalTodayStr();
+            const isToday = state.selectedDate === todayStr;
+
+            document.getElementById('dayOfWeekBadge').textContent = isToday ? `${dayName} · 今天` : dayName;
+            const backBtn = document.getElementById('backToTodayBtn');
+            if (isToday) {
+                backBtn.classList.add('hidden');
+            } else {
+                backBtn.classList.remove('hidden');
+            }
+
+            document.getElementById('summaryDateTitle').textContent = `${state.selectedDate} (${dayName}) 訓練總覽`;
+            document.getElementById('dailyLogHeaderTitle').textContent = `${state.selectedDate} (${dayName}) 已儲存訓練明細`;
+        }
+
+        function onDateChange(val) {
+            if (!val) return;
+            state.selectedDate = val;
+            state.editingEntryId = null;
+            refreshAllUI();
+        }
+
+        function shiftDate(deltaDays) {
+            const parts = state.selectedDate.split('-');
+            const d = new Date(Number(parts[0]), Number(parts[1]) - 1, Number(parts[2]));
+            d.setDate(d.getDate() + deltaDays);
+            state.selectedDate = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+            state.editingEntryId = null;
+            refreshAllUI();
+        }
+
+        function goToToday() {
+            state.selectedDate = getLocalTodayStr();
+            state.editingEntryId = null;
+            refreshAllUI();
+            showToast('已切換回今天日期');
+        }
+
+        function renderStreakAndStats() {
+            const uniqueDatesSet = new Set(state.logs.map(l => l.date));
+            const uniqueDates = Array.from(uniqueDatesSet).sort();
+
+            document.getElementById('statTotalDays').textContent = uniqueDates.length;
+            document.getElementById('statTotalLogsHint').textContent = `共 ${state.logs.length} 筆動作`;
+
+            let streak = 0;
+            if (uniqueDates.length > 0) {
+                const todayStr = getLocalTodayStr();
+                const latestDateStr = uniqueDates[uniqueDates.length - 1];
+                let cursorStr = uniqueDatesSet.has(todayStr) ? todayStr : latestDateStr;
+                while (uniqueDatesSet.has(cursorStr)) {
+                    streak++;
+                    const parts = cursorStr.split('-');
+                    const d = new Date(Number(parts[0]), Number(parts[1]) - 1, Number(parts[2]));
+                    d.setDate(d.getDate() - 1);
+                    cursorStr = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+                }
+                const lastDayZh = getChineseDayOfWeek(latestDateStr);
+                document.getElementById('statLastTrainedHint').textContent = `最近：${latestDateStr.slice(5)} (${lastDayZh})`;
+            } else {
+                document.getElementById('statLastTrainedHint').textContent = '尚無訓練紀錄';
+            }
+            document.getElementById('statStreakDays').textContent = streak;
+
+            const parts = state.selectedDate.split('-');
+            const curr = new Date(Number(parts[0]), Number(parts[1]) - 1, Number(parts[2]));
+            const dayOfWeek = curr.getDay() === 0 ? 7 : curr.getDay();
+            const monday = new Date(curr);
+            monday.setDate(curr.getDate() - (dayOfWeek - 1));
+
+            let weekTrainedCount = 0;
+            for (let i = 0; i < 7; i++) {
+                const temp = new Date(monday);
+                temp.setDate(monday.getDate() + i);
+                const dStr = `${temp.getFullYear()}-${String(temp.getMonth() + 1).padStart(2, '0')}-${String(temp.getDate()).padStart(2, '0')}`;
+                if (uniqueDatesSet.has(dStr)) weekTrainedCount++;
+            }
+            document.getElementById('statWeekDays').textContent = weekTrainedCount;
+        }
+
+        // ==================== TAB SWITCHING ====================
+        function switchTab(tab) {
+            state.activeTab = tab;
+            ['strength', 'cardio', 'history'].forEach(t => {
+                const panel = document.getElementById(`tabPanel-${t}`);
+                const btn = document.getElementById(`tabBtn-${t}`);
+                if (t === tab) {
+                    panel.classList.remove('hidden');
+                    if (t === 'strength') {
+                        btn.className = 'btn-active py-2.5 px-3 rounded-xl font-bold text-sm flex items-center justify-center gap-2 transition bg-lime-400 text-slate-950 shadow-md';
+                    } else if (t === 'cardio') {
+                        btn.className = 'btn-active py-2.5 px-3 rounded-xl font-bold text-sm flex items-center justify-center gap-2 transition bg-cyan-400 text-slate-950 shadow-md';
+                    } else {
+                        btn.className = 'btn-active py-2.5 px-3 rounded-xl font-bold text-sm flex items-center justify-center gap-2 transition bg-amber-400 text-slate-950 shadow-md';
+                    }
+                } else {
+                    panel.classList.add('hidden');
+                    btn.className = 'btn-active py-2.5 px-3 rounded-xl font-bold text-sm flex items-center justify-center gap-2 transition text-slate-300 hover:bg-slate-800';
+                }
+            });
+
+            if (tab === 'history') {
+                renderHistoryTab();
+            }
+        }
+
+        // ==================== STRENGTH MODULE & SET-BY-SET EDITOR ====================
+        function renderStrengthCategories() {
+            const bar = document.getElementById('strengthCategoryBar');
+            bar.innerHTML = STRENGTH_CATEGORIES.map(cat => {
+                const active = state.selectedCategory === cat;
+                return `
+                    <button onclick="selectStrengthCategory('${cat}')"
+                        class="btn-active whitespace-nowrap px-3.5 py-1.5 rounded-xl text-xs font-bold transition ${
+                            active
+                                ? 'bg-lime-400 text-slate-950 shadow-sm'
+                                : 'bg-slate-900 text-slate-400 hover:text-white border border-slate-800'
+                        }">
+                        ${cat}
+                    </button>
+                `;
+            }).join('');
+        }
+
+        function selectStrengthCategory(cat) {
+            state.selectedCategory = cat;
+            renderStrengthCategories();
+            renderStrengthEquipmentGrid();
+        }
+
+        function getLastEquipmentRecord(equipId, type) {
+            const matching = state.logs
+                .filter(l => l.type === type && l.equipId === equipId)
+                .sort((a, b) => {
+                    if (a.date !== b.date) return b.date.localeCompare(a.date);
+                    return (b.timestamp || 0) - (a.timestamp || 0);
+                });
+            return matching.length > 0 ? matching[0] : null;
+        }
+
+        function getMaxWeightForEquipment(equipId) {
+            const matching = state.logs.filter(l => l.type === 'strength' && l.equipId === equipId);
+            if (matching.length === 0) return 0;
+            let maxW = 0;
+            matching.forEach(l => {
+                const stats = getStrengthLogStats(l);
+                if (stats.maxWeight > maxW) maxW = stats.maxWeight;
+            });
+            return maxW;
+        }
+
+        function renderStrengthEquipmentGrid() {
+            const grid = document.getElementById('strengthEquipmentGrid');
+            const filtered = state.selectedCategory === '全部'
+                ? state.strengthEquipment
+                : state.strengthEquipment.filter(e => e.category === state.selectedCategory);
+
+            if (filtered.length === 0) {
+                grid.innerHTML = `<div class="col-span-full text-xs text-slate-500 py-4 text-center">此分類尚無器材，請點選右上角「+ 新增自訂器材」</div>`;
+                return;
+            }
+
+            grid.innerHTML = filtered.map(eq => {
+                const isSelected = eq.id === state.selectedStrengthId;
+                const lastLog = getLastEquipmentRecord(eq.id, 'strength');
+                let subText = '尚無紀錄';
+                if (lastLog) {
+                    const stats = getStrengthLogStats(lastLog);
+                    subText = `上次: 最高${stats.maxWeight}kg · ${stats.setsCount}組 (${stats.totalReps}次)`;
+                }
+                return `
+                    <button type="button" onclick="selectStrengthEquipment('${eq.id}', true)"
+                        class="btn-active text-left p-2.5 rounded-xl border transition flex flex-col justify-between ${
+                            isSelected
+                                ? 'bg-lime-400/15 border-lime-400 text-white shadow-sm'
+                                : 'bg-slate-900/80 border-slate-800/90 text-slate-300 hover:border-slate-700'
+                        }">
+                        <div class="flex items-center justify-between gap-1">
+                            <span class="text-[10px] font-bold px-1.5 py-0.5 rounded bg-slate-800 text-slate-400">${eq.category}</span>
+                            ${isSelected ? '<i class="fa-solid fa-circle-check text-lime-400 text-xs"></i>' : ''}
+                        </div>
+                        <div class="font-bold text-xs sm:text-sm mt-1.5 line-clamp-1">${escapeHtml(eq.name)}</div>
+                        <div class="text-[11px] mt-1 ${lastLog ? 'text-lime-300/90 font-medium' : 'text-slate-500'}">
+                            ${subText}
+                        </div>
+                    </button>
+                `;
+            }).join('');
+        }
+
+        function selectStrengthEquipment(equipId, resetWorkingSets = true) {
+            state.selectedStrengthId = equipId;
+            if (resetWorkingSets) {
+                state.editingEntryId = null;
+                document.getElementById('saveStrengthBtnText').textContent = '儲存此器材訓練紀錄';
+            }
+            renderStrengthEquipmentGrid();
+
+            const eq = state.strengthEquipment.find(e => e.id === equipId);
+            const lastLog = getLastEquipmentRecord(equipId, 'strength');
+            const maxW = getMaxWeightForEquipment(equipId);
+            const memoryCard = document.getElementById('strengthMemoryCard');
+
+            if (lastLog) {
+                const dayZh = getChineseDayOfWeek(lastLog.date);
+                const stats = getStrengthLogStats(lastLog);
+                const setChipsHtml = lastLog.setDetails.map((s, idx) => `
+                    <span class="inline-flex items-center gap-1 text-xs font-bold px-2.5 py-1 rounded-lg ${
+                        s.isFailure
+                            ? 'bg-rose-500/20 text-rose-300 border border-rose-500/40'
+                            : 'bg-slate-800 text-slate-200 border border-slate-700'
+                    }">
+                        <span class="text-[10px] text-slate-400">第${idx + 1}組</span>
+                        ${s.weight}kg × ${s.reps}下
+                        ${s.isFailure ? '<span class="text-[10px] text-rose-400 font-black">🔥力竭</span>' : ''}
+                    </span>
+                `).join('');
+
+                memoryCard.innerHTML = `
+                    <div class="flex flex-wrap items-center justify-between gap-2">
+                        <div class="flex items-center gap-2">
+                            <span class="px-2 py-0.5 rounded-lg bg-lime-400/20 text-lime-300 text-xs font-extrabold flex items-center gap-1">
+                                <i class="fa-solid fa-lightbulb"></i> 上次逐組記憶
+                            </span>
+                            <span class="text-xs font-bold text-slate-300">${lastLog.date} (${dayZh})</span>
+                            <span class="text-xs font-extrabold text-lime-400">共 ${stats.totalReps} 次 / ${stats.totalVolume} kg</span>
+                        </div>
+                        <div class="flex items-center gap-3">
+                            ${maxW > 0 ? `<span class="text-xs text-amber-300 font-bold"><i class="fa-solid fa-crown"></i> 最高 PR：${maxW} kg</span>` : ''}
+                            <button type="button" onclick="selectStrengthEquipment('${equipId}', true); showToast('已重新載入上次各組數據');"
+                                class="text-xs font-bold text-lime-400 hover:underline flex items-center gap-1">
+                                <i class="fa-solid fa-rotate-left"></i> 套用上次組數
+                            </button>
+                        </div>
+                    </div>
+                    <div class="flex flex-wrap gap-1.5 pt-1">
+                        ${setChipsHtml}
+                    </div>
+                    ${lastLog.note ? `<div class="text-xs text-slate-400 bg-slate-950/90 px-2.5 py-1.5 rounded-lg border border-slate-800"><i class="fa-regular fa-comment-dots text-slate-500 mr-1"></i>上次備註：${escapeHtml(lastLog.note)}</div>` : ''}
+                `;
+
+                if (resetWorkingSets) {
+                    state.workingSets = lastLog.setDetails.map(s => ({
+                        weight: Number(s.weight),
+                        reps: Number(s.reps),
+                        isFailure: Boolean(s.isFailure),
+                        completed: false
+                    }));
+                    document.getElementById('inputStrengthNote').value = lastLog.note || '';
+                }
+            } else {
+                memoryCard.innerHTML = `
+                    <div class="flex items-center justify-between">
+                        <span class="text-xs font-bold text-slate-400 flex items-center gap-1.5">
+                            <i class="fa-solid fa-circle-info text-slate-500"></i>
+                            「${eq ? escapeHtml(eq.name) : ''}」尚無歷史紀錄，儲存後將自動記住您每一組的重量與次數！
+                        </span>
+                    </div>
+                `;
+                if (resetWorkingSets && eq) {
+                    const count = eq.defaultSets || 3;
+                    state.workingSets = Array.from({ length: count }, () => ({
+                        weight: eq.defaultWeight || 20,
+                        reps: eq.defaultReps || 12,
+                        isFailure: false,
+                        completed: false
+                    }));
+                    document.getElementById('inputStrengthNote').value = '';
+                }
+            }
+
+            renderSetBySetRows();
+            updateStrengthLivePreview();
+        }
+
+        // Render Set-by-Set Editor Rows
+        function renderSetBySetRows() {
+            const container = document.getElementById('setBySetContainer');
+            if (!state.workingSets || state.workingSets.length === 0) {
+                state.workingSets = [{ weight: 20, reps: 12, isFailure: false, completed: false }];
+            }
+
+            container.innerHTML = state.workingSets.map((setItem, idx) => {
+                const isDone = setItem.completed;
+                const isFail = setItem.isFailure;
+                return `
+                    <div class="rounded-xl p-2.5 sm:p-3 border transition ${
+                        isDone
+                            ? 'bg-lime-950/20 border-lime-500/40'
+                            : 'bg-slate-900/90 border-slate-800'
+                    }">
+                        <div class="flex flex-wrap items-center justify-between gap-2">
+                            <!-- Left: Set Number & Check Complete Button -->
+                            <div class="flex items-center gap-2">
+                                <button type="button" onclick="toggleSetCompleted(${idx})"
+                                    class="btn-active px-2.5 py-1.5 rounded-lg font-extrabold text-xs flex items-center gap-1.5 border transition ${
+                                        isDone
+                                            ? 'bg-lime-400 text-slate-950 border-lime-400 shadow-sm'
+                                            : 'bg-slate-800 hover:bg-slate-700 text-slate-300 border-slate-700'
+                                    }">
+                                    <i class="fa-solid ${isDone ? 'fa-check' : 'fa-circle-check opacity-50'}"></i>
+                                    <span>第 ${idx + 1} 組</span>
+                                </button>
+                                ${isDone ? '<span class="text-[11px] font-bold text-lime-400">已完組</span>' : ''}
+                            </div>
+
+                            <!-- Middle: Weight & Reps Individual Adjusters -->
+                            <div class="flex flex-wrap items-center gap-2 sm:gap-3">
+                                <!-- Weight Control -->
+                                <div class="flex items-center gap-1 bg-slate-950 px-2 py-1 rounded-xl border border-slate-800">
+                                    <button type="button" onclick="adjustSingleSet(${idx}, 'weight', -2.5)"
+                                        class="btn-active w-7 h-7 rounded-lg bg-slate-800 hover:bg-slate-700 text-xs font-bold text-slate-300">-2.5</button>
+                                    <div class="flex items-baseline px-1">
+                                        <input type="number" step="0.5" min="0" value="${setItem.weight}"
+                                            oninput="onSingleSetInput(${idx}, 'weight', this.value)"
+                                            class="w-14 bg-transparent text-center font-black text-base text-white focus:outline-none">
+                                        <span class="text-[10px] text-slate-400 font-bold">kg</span>
+                                    </div>
+                                    <button type="button" onclick="adjustSingleSet(${idx}, 'weight', 2.5)"
+                                        class="btn-active w-7 h-7 rounded-lg bg-lime-400/15 hover:bg-lime-400/25 text-xs font-bold text-lime-300">+2.5</button>
+                                </div>
+
+                                <!-- Reps Control -->
+                                <div class="flex items-center gap-1 bg-slate-950 px-2 py-1 rounded-xl border border-slate-800">
+                                    <button type="button" onclick="adjustSingleSet(${idx}, 'reps', -1)"
+                                        class="btn-active w-7 h-7 rounded-lg bg-slate-800 hover:bg-slate-700 text-xs font-bold text-slate-300">-1</button>
+                                    <div class="flex items-baseline px-1">
+                                        <input type="number" step="1" min="1" value="${setItem.reps}"
+                                            oninput="onSingleSetInput(${idx}, 'reps', this.value)"
+                                            class="w-11 bg-transparent text-center font-black text-base text-white focus:outline-none">
+                                        <span class="text-[10px] text-slate-400 font-bold">下</span>
+                                    </div>
+                                    <button type="button" onclick="adjustSingleSet(${idx}, 'reps', 1)"
+                                        class="btn-active w-7 h-7 rounded-lg bg-lime-400/15 hover:bg-lime-400/25 text-xs font-bold text-lime-300">+1</button>
+                                </div>
+                            </div>
+
+                            <!-- Right: Failure Toggle & Delete Set -->
+                            <div class="flex items-center gap-1.5 ml-auto sm:ml-0">
+                                <button type="button" onclick="toggleSetFailure(${idx})" title="標記此組是否力竭"
+                                    class="btn-active px-2.5 py-1.5 rounded-lg text-xs font-bold border transition flex items-center gap-1 ${
+                                        isFail
+                                            ? 'bg-rose-500/25 text-rose-300 border-rose-500/50 shadow-sm'
+                                            : 'bg-slate-800/80 text-slate-400 border-slate-700 hover:text-slate-200'
+                                    }">
+                                    <i class="fa-solid fa-fire-flame-curved ${isFail ? 'text-rose-400' : ''}"></i>
+                                    <span>力竭</span>
+                                </button>
+
+                                ${state.workingSets.length > 1 ? `
+                                    <button type="button" onclick="removeStrengthSetRow(${idx})" title="刪除此組"
+                                        class="btn-active w-7 h-7 rounded-lg bg-slate-800/80 hover:bg-rose-500/20 text-slate-400 hover:text-rose-400 flex items-center justify-center text-xs">
+                                        <i class="fa-solid fa-xmark"></i>
+                                    </button>
+                                ` : ''}
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function adjustSingleSet(idx, field, delta) {
+            const target = state.workingSets[idx];
+            if (!target) return;
+            let val = Number(target[field]) || 0;
+            val = Math.round((val + delta) * 10) / 10;
+            if (field === 'weight' && val < 0) val = 0;
+            if (field === 'reps' && val < 1) val = 1;
+            target[field] = val;
+            renderSetBySetRows();
+            updateStrengthLivePreview();
+        }
+
+        function onSingleSetInput(idx, field, rawVal) {
+            const target = state.workingSets[idx];
+            if (!target) return;
+            let val = parseFloat(rawVal);
+            if (isNaN(val)) val = 0;
+            if (field === 'weight' && val < 0) val = 0;
+            if (field === 'reps' && val < 1) val = 1;
+            target[field] = val;
+            updateStrengthLivePreview();
+        }
+
+        function toggleSetCompleted(idx) {
+            const target = state.workingSets[idx];
+            if (!target) return;
+            target.completed = !target.completed;
+            renderSetBySetRows();
+
+            // If checked as completed and auto-start rest timer is enabled, start the rest timer!
+            if (target.completed && state.autoStartTimerOnCheck) {
+                restTimer.remainingSeconds = restTimer.presetSeconds;
+                startRestTimer();
+                showToast(`第 ${idx + 1} 組完成！組間休息倒數 ${restTimer.presetSeconds} 秒已啟動`);
+            }
+        }
+
+        function toggleSetFailure(idx) {
+            const target = state.workingSets[idx];
+            if (!target) return;
+            target.isFailure = !target.isFailure;
+            renderSetBySetRows();
+        }
+
+        function addStrengthSetRow() {
+            const last = state.workingSets[state.workingSets.length - 1] || { weight: 20, reps: 12 };
+            state.workingSets.push({
+                weight: Number(last.weight),
+                reps: Number(last.reps),
+                isFailure: false,
+                completed: false
+            });
+            renderSetBySetRows();
+            updateStrengthLivePreview();
+        }
+
+        function removeStrengthSetRow(idx) {
+            if (state.workingSets.length <= 1) return;
+            state.workingSets.splice(idx, 1);
+            renderSetBySetRows();
+            updateStrengthLivePreview();
+        }
+
+        function bulkAdjustSets(field, delta) {
+            state.workingSets.forEach(s => {
+                let val = Math.round(((Number(s[field]) || 0) + delta) * 10) / 10;
+                if (field === 'weight' && val < 0) val = 0;
+                if (field === 'reps' && val < 1) val = 1;
+                s[field] = val;
+            });
+            renderSetBySetRows();
+            updateStrengthLivePreview();
+            showToast(`已將全部組數 ${field === 'weight' ? '重量' : '次數'} ${delta > 0 ? '+' : ''}${delta}`);
+        }
+
+        function updateStrengthLivePreview() {
+            let totalReps = 0;
+            let totalVol = 0;
+            let currentMaxWeight = 0;
+
+            state.workingSets.forEach(s => {
+                const w = Math.max(0, Number(s.weight) || 0);
+                const r = Math.max(1, Number(s.reps) || 1);
+                totalReps += r;
+                totalVol += w * r;
+                if (w > currentMaxWeight) currentMaxWeight = w;
+            });
+            totalVol = Math.round(totalVol * 10) / 10;
+
+            document.getElementById('liveItemTotalReps').textContent = `${totalReps.toLocaleString()} 次 (${state.workingSets.length} 組)`;
+            document.getElementById('liveItemTotalVolume').textContent = `${totalVol.toLocaleString()} kg`;
+
+            const lastLog = getLastEquipmentRecord(state.selectedStrengthId, 'strength');
+            const weightBadge = document.getElementById('weightProgressionBadge');
+            const volBadge = document.getElementById('volumeProgressionBadge');
+
+            if (lastLog) {
+                const lastStats = getStrengthLogStats(lastLog);
+                const diffWeight = Math.round((currentMaxWeight - lastStats.maxWeight) * 10) / 10;
+                if (diffWeight > 0) {
+                    weightBadge.textContent = `🔥 最高重量 +${diffWeight} kg`;
+                    weightBadge.classList.remove('hidden');
+                } else {
+                    weightBadge.classList.add('hidden');
+                }
+
+                if (totalVol > lastStats.totalVolume || totalReps > lastStats.totalReps) {
+                    const diffReps = totalReps - lastStats.totalReps;
+                    volBadge.textContent = diffReps > 0 ? `📈 較上次多 +${diffReps} 次` : `📈 容量提升`;
+                    volBadge.classList.remove('hidden');
+                } else {
+                    volBadge.classList.add('hidden');
+                }
+            } else {
+                weightBadge.classList.add('hidden');
+                volBadge.classList.add('hidden');
+            }
+        }
+
+        function appendNoteTag(inputId, tagText) {
+            const el = document.getElementById(inputId);
+            const curr = el.value.trim();
+            el.value = curr ? `${curr}、${tagText}` : tagText;
+        }
+
+        function saveStrengthEntry() {
+            const eq = state.strengthEquipment.find(e => e.id === state.selectedStrengthId);
+            if (!eq) return;
+
+            const cleanSets = state.workingSets.map(s => ({
+                weight: Math.max(0, Number(s.weight) || 0),
+                reps: Math.max(1, parseInt(s.reps, 10) || 1),
+                isFailure: Boolean(s.isFailure),
+                completed: true
+            }));
+            const note = document.getElementById('inputStrengthNote').value.trim();
+
+            if (state.editingEntryId) {
+                const idx = state.logs.findIndex(l => l.id === state.editingEntryId);
+                if (idx !== -1) {
+                    state.logs[idx] = {
+                        ...state.logs[idx],
+                        equipId: eq.id,
+                        equipName: eq.name,
+                        category: eq.category,
+                        setDetails: cleanSets,
+                        note
+                    };
+                }
+                state.editingEntryId = null;
+                document.getElementById('saveStrengthBtnText').textContent = '儲存此器材訓練紀錄';
+                showToast(`已更新「${eq.name}」的逐組紀錄！`);
+            } else {
+                const entry = {
+                    id: 'log_' + Date.now() + '_' + Math.random().toString(36).slice(2, 6),
+                    date: state.selectedDate,
+                    type: 'strength',
+                    equipId: eq.id,
+                    equipName: eq.name,
+                    category: eq.category,
+                    setDetails: cleanSets,
+                    note,
+                    timestamp: Date.now()
+                };
+                state.logs.push(entry);
+                const stats = getStrengthLogStats(entry);
+                showToast(`已儲存：${eq.name} 共 ${stats.setsCount} 組 (${stats.totalReps} 次)`);
+            }
+
+            saveState();
+            refreshAllUI();
+        }
+
+        // ==================== CARDIO MODULE ====================
+        function renderCardioEquipmentGrid() {
+            const grid = document.getElementById('cardioEquipmentGrid');
+            grid.innerHTML = state.cardioEquipment.map(eq => {
+                const isSelected = eq.id === state.selectedCardioId;
+                const lastLog = getLastEquipmentRecord(eq.id, 'cardio');
+                return `
+                    <button type="button" onclick="selectCardioEquipment('${eq.id}', true)"
+                        class="btn-active text-left p-3 rounded-xl border transition flex flex-col justify-between ${
+                            isSelected
+                                ? 'bg-cyan-400/15 border-cyan-400 text-white shadow-sm'
+                                : 'bg-slate-900/80 border-slate-800/90 text-slate-300 hover:border-slate-700'
+                        }">
+                        <div class="flex items-center justify-between">
+                            <span class="text-[10px] font-bold px-1.5 py-0.5 rounded bg-slate-800 text-cyan-300">有氧</span>
+                            ${isSelected ? '<i class="fa-solid fa-circle-check text-cyan-400 text-xs"></i>' : ''}
+                        </div>
+                        <div class="font-bold text-xs sm:text-sm mt-1.5 line-clamp-1">${escapeHtml(eq.name)}</div>
+                        <div class="text-[11px] mt-1 ${lastLog ? 'text-cyan-300/90 font-medium' : 'text-slate-500'}">
+                            ${lastLog ? `上次: 坡度${lastLog.incline}% · 速度${lastLog.speed} · ${lastLog.duration}分` : '尚無紀錄'}
+                        </div>
+                    </button>
+                `;
+            }).join('');
+        }
+
+        function selectCardioEquipment(equipId, autoFill = true) {
+            state.selectedCardioId = equipId;
+            if (autoFill) {
+                state.editingEntryId = null;
+                document.getElementById('saveCardioBtnText').textContent = '儲存有氧運動紀錄';
+            }
+            renderCardioEquipmentGrid();
+
+            const eq = state.cardioEquipment.find(e => e.id === equipId);
+            const lastLog = getLastEquipmentRecord(equipId, 'cardio');
+            const memoryCard = document.getElementById('cardioMemoryCard');
+
+            if (lastLog) {
+                const dayZh = getChineseDayOfWeek(lastLog.date);
+                memoryCard.innerHTML = `
+                    <div class="flex flex-wrap items-center justify-between gap-2">
+                        <div class="flex items-center gap-2">
+                            <span class="px-2 py-0.5 rounded-lg bg-cyan-400/20 text-cyan-300 text-xs font-extrabold flex items-center gap-1">
+                                <i class="fa-solid fa-lightbulb"></i> 上次有氧記憶
+                            </span>
+                            <span class="text-xs font-bold text-slate-300">${lastLog.date} (${dayZh})</span>
+                        </div>
+                        <button type="button" onclick="selectCardioEquipment('${equipId}', true); showToast('已套用上次有氧設定');"
+                            class="text-xs font-bold text-cyan-400 hover:underline flex items-center gap-1">
+                            <i class="fa-solid fa-rotate-left"></i> 套用上次設定
+                        </button>
+                    </div>
+                    <div class="text-base sm:text-lg font-black text-white pt-1">
+                        坡度 ${lastLog.incline}% · 速度 ${lastLog.speed} · 時長 ${lastLog.duration} 分鐘
+                    </div>
+                    ${lastLog.note ? `<div class="text-xs text-slate-400 bg-slate-950/90 px-2.5 py-1.5 rounded-lg border border-slate-800">上次備註：${escapeHtml(lastLog.note)}</div>` : ''}
+                `;
+
+                if (autoFill) {
+                    document.getElementById('inputIncline').value = lastLog.incline;
+                    document.getElementById('inputSpeed').value = lastLog.speed;
+                    document.getElementById('inputDuration').value = lastLog.duration;
+                    document.getElementById('inputCardioNote').value = lastLog.note || '';
+                }
+            } else {
+                memoryCard.innerHTML = `
+                    <div class="text-xs font-bold text-slate-400">
+                        <i class="fa-solid fa-circle-info text-slate-500 mr-1"></i>
+                        「${eq ? escapeHtml(eq.name) : ''}」尚無歷史紀錄，儲存後將自動記住您的坡度、速度與時長。
+                    </div>
+                `;
+                if (autoFill && eq) {
+                    document.getElementById('inputIncline').value = eq.defaultIncline || 3.0;
+                    document.getElementById('inputSpeed').value = eq.defaultSpeed || 6.0;
+                    document.getElementById('inputDuration').value = eq.defaultDuration || 30;
+                    document.getElementById('inputCardioNote').value = '';
+                }
+            }
+
+            updateCardioLivePreview();
+        }
+
+        function adjustCardioVal(field, delta) {
+            const map = { incline: 'inputIncline', speed: 'inputSpeed', duration: 'inputDuration' };
+            const el = document.getElementById(map[field]);
+            let val = parseFloat(el.value) || 0;
+            val = Math.round((val + delta) * 10) / 10;
+            if (field === 'duration' && val < 1) val = 1;
+            if (val < 0) val = 0;
+            el.value = val;
+            updateCardioLivePreview();
+        }
+
+        function updateCardioLivePreview() {
+            const incline = Math.max(0, parseFloat(document.getElementById('inputIncline').value) || 0);
+            const speed = Math.max(0, parseFloat(document.getElementById('inputSpeed').value) || 0);
+            const duration = Math.max(1, parseInt(document.getElementById('inputDuration').value, 10) || 1);
+
+            document.getElementById('liveCardioEstSub').textContent = `坡度 ${incline}% · 速度 ${speed} · ${duration} 分鐘`;
+
+            const lastLog = getLastEquipmentRecord(state.selectedCardioId, 'cardio');
+            const badge = document.getElementById('cardioProgressionBadge');
+            if (lastLog && (incline > lastLog.incline || speed > lastLog.speed || duration > lastLog.duration)) {
+                badge.classList.remove('hidden');
+            } else {
+                badge.classList.add('hidden');
+            }
+        }
+
+        function saveCardioEntry() {
+            const eq = state.cardioEquipment.find(e => e.id === state.selectedCardioId);
+            if (!eq) return;
+
+            const incline = Math.max(0, parseFloat(document.getElementById('inputIncline').value) || 0);
+            const speed = Math.max(0, parseFloat(document.getElementById('inputSpeed').value) || 0);
+            const duration = Math.max(1, parseInt(document.getElementById('inputDuration').value, 10) || 1);
+            const note = document.getElementById('inputCardioNote').value.trim();
+
+            if (state.editingEntryId) {
+                const idx = state.logs.findIndex(l => l.id === state.editingEntryId);
+                if (idx !== -1) {
+                    state.logs[idx] = {
+                        ...state.logs[idx],
+                        equipId: eq.id,
+                        equipName: eq.name,
+                        incline,
+                        speed,
+                        duration,
+                        note
+                    };
+                }
+                state.editingEntryId = null;
+                document.getElementById('saveCardioBtnText').textContent = '儲存有氧運動紀錄';
+                showToast(`已更新「${eq.name}」有氧紀錄！`);
+            } else {
+                const entry = {
+                    id: 'log_' + Date.now() + '_' + Math.random().toString(36).slice(2, 6),
+                    date: state.selectedDate,
+                    type: 'cardio',
+                    equipId: eq.id,
+                    equipName: eq.name,
+                    incline,
+                    speed,
+                    duration,
+                    note,
+                    timestamp: Date.now()
+                };
+                state.logs.push(entry);
+                showToast(`已紀錄有氧：${eq.name} (${duration} 分鐘)`);
+            }
+
+            saveState();
+            refreshAllUI();
+        }
+
+        // ==================== DAILY SUMMARY & SAVED LOG LIST ====================
+        function renderDailySummaryAndLogs() {
+            const dayLogs = state.logs.filter(l => l.date === state.selectedDate);
+            const strengthLogs = dayLogs.filter(l => l.type === 'strength');
+            const cardioLogs = dayLogs.filter(l => l.type === 'cardio');
+
+            let totalReps = 0;
+            let totalSets = 0;
+            let totalVolume = 0;
+
+            strengthLogs.forEach(item => {
+                const stats = getStrengthLogStats(item);
+                totalReps += stats.totalReps;
+                totalSets += stats.setsCount;
+                totalVolume += stats.totalVolume;
+            });
+
+            let totalCardioMins = 0;
+            cardioLogs.forEach(item => {
+                totalCardioMins += Number(item.duration) || 0;
+            });
+
+            document.getElementById('summaryEntryCount').textContent = `重訓 ${strengthLogs.length} 項 · 有氧 ${cardioLogs.length} 項`;
+            document.getElementById('dailyTotalReps').textContent = totalReps.toLocaleString();
+            document.getElementById('dailyTotalSets').textContent = totalSets.toLocaleString();
+            document.getElementById('dailyTotalVolume').textContent = Math.round(totalVolume).toLocaleString();
+            document.getElementById('dailyTotalCardioMins').textContent = totalCardioMins.toLocaleString();
+
+            const container = document.getElementById('dailyLogsContainer');
+            if (dayLogs.length === 0) {
+                container.innerHTML = `
+                    <div class="text-center py-8 px-4 rounded-2xl bg-slate-900/50 border border-dashed border-slate-800">
+                        <i class="fa-solid fa-dumbbell text-2xl text-slate-600 mb-2"></i>
+                        <p class="text-sm font-bold text-slate-400">這天還沒有儲存的訓練紀錄</p>
+                        <p class="text-xs text-slate-500 mt-1">在上方選擇器材、調整各組次數後點擊「儲存此器材訓練紀錄」即可累計整天總次數！</p>
+                    </div>
+                `;
+                return;
+            }
+
+            container.innerHTML = dayLogs.map(log => {
+                if (log.type === 'strength') {
+                    const stats = getStrengthLogStats(log);
+                    const badgesHtml = log.setDetails.map((s, idx) => `
+                        <span class="inline-flex items-center gap-1 text-xs font-bold px-2 py-0.5 rounded-md ${
+                            s.isFailure
+                                ? 'bg-rose-500/20 text-rose-300 border border-rose-500/40'
+                                : 'bg-slate-800 text-slate-200'
+                        }">
+                            <span class="text-[10px] text-slate-400">#${idx + 1}</span>
+                            ${s.weight}kg×${s.reps}下
+                            ${s.isFailure ? '<span class="text-[10px] text-rose-400">🔥力竭</span>' : ''}
+                        </span>
+                    `).join('');
+
+                    return `
+                        <div class="bg-slate-900/90 border border-slate-800 hover:border-slate-700 rounded-2xl p-3.5 transition flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                            <div class="space-y-1.5">
+                                <div class="flex flex-wrap items-center gap-2">
+                                    <span class="text-[10px] font-extrabold px-2 py-0.5 rounded-md bg-lime-400/15 text-lime-300 border border-lime-400/30">
+                                        重訓 · ${log.category || '器材'}
+                                    </span>
+                                    <h4 class="font-extrabold text-sm sm:text-base text-white">${escapeHtml(log.equipName)}</h4>
+                                    <span class="text-xs font-extrabold px-2 py-0.5 rounded-lg bg-slate-800 text-lime-400">
+                                        共 ${stats.setsCount} 組 / ${stats.totalReps} 次 (${stats.totalVolume} kg)
+                                    </span>
+                                </div>
+                                <div class="flex flex-wrap gap-1.5">
+                                    ${badgesHtml}
+                                </div>
+                                ${log.note ? `<p class="text-xs text-slate-400 pt-0.5"><i class="fa-regular fa-note-sticky mr-1 text-slate-500"></i>${escapeHtml(log.note)}</p>` : ''}
+                            </div>
+                            <div class="flex items-center gap-1.5 self-end sm:self-center">
+                                <button onclick="quickAppendSetToSavedLog('${log.id}')" title="快速加一組"
+                                    class="btn-active text-xs font-bold px-2.5 py-1.5 rounded-xl bg-lime-400/15 hover:bg-lime-400/25 text-lime-300 border border-lime-400/30 whitespace-nowrap">
+                                    +1 組
+                                </button>
+                                <button onclick="editLogEntry('${log.id}')" title="載回上方逐組編輯"
+                                    class="btn-active w-8 h-8 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 flex items-center justify-center">
+                                    <i class="fa-solid fa-pen text-xs"></i>
+                                </button>
+                                <button onclick="deleteLogEntry('${log.id}')" title="刪除"
+                                    class="btn-active w-8 h-8 rounded-xl bg-slate-800 hover:bg-rose-500/20 text-slate-400 hover:text-rose-400 flex items-center justify-center">
+                                    <i class="fa-solid fa-trash text-xs"></i>
+                                </button>
+                            </div>
+                        </div>
+                    `;
+                } else {
+                    return `
+                        <div class="bg-slate-900/90 border border-cyan-500/30 hover:border-cyan-500/50 rounded-2xl p-3.5 transition flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                            <div class="space-y-1">
+                                <div class="flex items-center gap-2">
+                                    <span class="text-[10px] font-extrabold px-2 py-0.5 rounded-md bg-cyan-400/15 text-cyan-300 border border-cyan-400/30">
+                                        <i class="fa-solid fa-person-running mr-1"></i>有氧運動
+                                    </span>
+                                    <h4 class="font-extrabold text-sm sm:text-base text-white">${escapeHtml(log.equipName)}</h4>
+                                </div>
+                                <div class="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs sm:text-sm">
+                                    <span class="font-bold text-slate-200">坡度 <strong class="text-cyan-300">${log.incline}%</strong></span>
+                                    <span class="text-slate-600">|</span>
+                                    <span class="font-bold text-slate-200">速度 <strong class="text-cyan-300">${log.speed}</strong></span>
+                                    <span class="text-slate-600">|</span>
+                                    <span class="font-black text-cyan-400">${log.duration} 分鐘</span>
+                                </div>
+                                ${log.note ? `<p class="text-xs text-slate-400 pt-0.5"><i class="fa-regular fa-note-sticky mr-1 text-slate-500"></i>${escapeHtml(log.note)}</p>` : ''}
+                            </div>
+                            <div class="flex items-center gap-1.5 self-end sm:self-center">
+                                <button onclick="quickAddFiveMins('${log.id}')" title="快速 +5 分鐘"
+                                    class="btn-active text-xs font-bold px-2.5 py-1.5 rounded-xl bg-cyan-400/15 hover:bg-cyan-400/25 text-cyan-300 border border-cyan-400/30 whitespace-nowrap">
+                                    +5 分鐘
+                                </button>
+                                <button onclick="editLogEntry('${log.id}')" title="編輯"
+                                    class="btn-active w-8 h-8 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 flex items-center justify-center">
+                                    <i class="fa-solid fa-pen text-xs"></i>
+                                </button>
+                                <button onclick="deleteLogEntry('${log.id}')" title="刪除"
+                                    class="btn-active w-8 h-8 rounded-xl bg-slate-800 hover:bg-rose-500/20 text-slate-400 hover:text-rose-400 flex items-center justify-center">
+                                    <i class="fa-solid fa-trash text-xs"></i>
+                                </button>
+                            </div>
+                        </div>
+                    `;
+                }
+            }).join('');
+        }
+
+        function quickAppendSetToSavedLog(logId) {
+            const item = state.logs.find(l => l.id === logId);
+            if (!item || !item.setDetails) return;
+            const lastSet = item.setDetails[item.setDetails.length - 1] || { weight: 20, reps: 12 };
+            item.setDetails.push({
+                weight: lastSet.weight,
+                reps: lastSet.reps,
+                isFailure: false,
+                completed: true
+            });
+            saveState();
+            refreshAllUI();
+            showToast(`${item.equipName} 已追加第 ${item.setDetails.length} 組！`);
+        }
+
+        function quickAddFiveMins(logId) {
+            const item = state.logs.find(l => l.id === logId);
+            if (!item) return;
+            item.duration = Number(item.duration) + 5;
+            saveState();
+            refreshAllUI();
+            showToast(`${item.equipName} 已增加為 ${item.duration} 分鐘！`);
+        }
+
+        function editLogEntry(logId) {
+            const item = state.logs.find(l => l.id === logId);
+            if (!item) return;
+
+            state.editingEntryId = logId;
+            if (item.type === 'strength') {
+                switchTab('strength');
+                state.selectedStrengthId = item.equipId;
+                state.workingSets = item.setDetails.map(s => ({ ...s }));
+                document.getElementById('inputStrengthNote').value = item.note || '';
+                document.getElementById('saveStrengthBtnText').textContent = '更新此器材訓練紀錄';
+                selectStrengthEquipment(item.equipId, false);
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+                showToast('已載入各組明細至上方，修改後請點擊「更新此器材訓練紀錄」');
+            } else {
+                switchTab('cardio');
+                state.selectedCardioId = item.equipId;
+                selectCardioEquipment(item.equipId, false);
+                document.getElementById('inputIncline').value = item.incline;
+                document.getElementById('inputSpeed').value = item.speed;
+                document.getElementById('inputDuration').value = item.duration;
+                document.getElementById('inputCardioNote').value = item.note || '';
+                document.getElementById('saveCardioBtnText').textContent = '更新有氧運動紀錄';
+                updateCardioLivePreview();
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+                showToast('已載入有氧紀錄至上方');
+            }
+        }
+
+        function deleteLogEntry(logId) {
+            state.logs = state.logs.filter(l => l.id !== logId);
+            if (state.editingEntryId === logId) state.editingEntryId = null;
+            saveState();
+            refreshAllUI();
+            showToast('已刪除該筆訓練紀錄');
+        }
+
+        // ==================== ADD CUSTOM EQUIPMENT MODAL ====================
+        function openAddEquipmentModal(type) {
+            state.addingModalType = type;
+            document.getElementById('newEquipName').value = '';
+            const title = document.getElementById('addModalTitle');
+            const catWrap = document.getElementById('newEquipCategoryWrap');
+            if (type === 'strength') {
+                title.textContent = '新增自訂重訓器材';
+                catWrap.classList.remove('hidden');
+            } else {
+                title.textContent = '新增自訂有氧器材';
+                catWrap.classList.add('hidden');
+            }
+            document.getElementById('addEquipmentModal').classList.remove('hidden');
+            setTimeout(() => document.getElementById('newEquipName').focus(), 100);
+        }
+
+        function closeAddEquipmentModal() {
+            document.getElementById('addEquipmentModal').classList.add('hidden');
+        }
+
+        function confirmAddEquipment() {
+            const name = document.getElementById('newEquipName').value.trim();
+            if (!name) {
+                showToast('請輸入器材名稱');
+                return;
+            }
+            const category = document.getElementById('newEquipCategory').value;
+
+            if (state.addingModalType === 'strength') {
+                const newId = 'eq_custom_' + Date.now();
+                state.strengthEquipment.push({
+                    id: newId,
+                    name,
+                    category,
+                    defaultWeight: 20,
+                    defaultReps: 12,
+                    defaultSets: 3
+                });
+                state.selectedCategory = '全部';
+                state.selectedStrengthId = newId;
+                saveState();
+                renderStrengthCategories();
+                selectStrengthEquipment(newId, true);
+                showToast(`已新增重訓器材：${name}`);
+            } else {
+                const newId = 'cd_custom_' + Date.now();
+                state.cardioEquipment.push({
+                    id: newId,
+                    name,
+                    defaultIncline: 3.0,
+                    defaultSpeed: 6.0,
+                    defaultDuration: 30
+                });
+                state.selectedCardioId = newId;
+                saveState();
+                selectCardioEquipment(newId, true);
+                showToast(`已新增有氧器材：${name}`);
+            }
+
+            closeAddEquipmentModal();
+        }
+
+        // ==================== HISTORY & PROGRESS TAB ====================
+        function renderHistoryTab() {
+            const sel = document.getElementById('historyEquipmentSelect');
+            const currentVal = sel.value || state.selectedStrengthId;
+            sel.innerHTML = [
+                `<optgroup label="重訓器材">` +
+                state.strengthEquipment.map(e => `<option value="${e.id}">${escapeHtml(e.name)}</option>`).join('') +
+                `</optgroup>`,
+                `<optgroup label="有氧運動">` +
+                state.cardioEquipment.map(c => `<option value="${c.id}">${escapeHtml(c.name)}</option>`).join('') +
+                `</optgroup>`
+            ].join('');
+            sel.value = currentVal;
+            renderEquipmentHistoryProgress();
+
+            const byDate = {};
+            state.logs.forEach(l => {
+                if (!byDate[l.date]) byDate[l.date] = { totalReps: 0, cardioMins: 0 };
+                if (l.type === 'strength') {
+                    const stats = getStrengthLogStats(l);
+                    byDate[l.date].totalReps += stats.totalReps;
+                } else {
+                    byDate[l.date].cardioMins += Number(l.duration) || 0;
+                }
+            });
+
+            const sortedDates = Object.keys(byDate).sort((a, b) => b.localeCompare(a));
+            const listEl = document.getElementById('allDatesHistoryList');
+            if (sortedDates.length === 0) {
+                listEl.innerHTML = `<div class="text-xs text-slate-500 py-4 text-center">尚無任何歷史訓練紀錄</div>`;
+                return;
+            }
+
+            listEl.innerHTML = sortedDates.map(dStr => {
+                const info = byDate[dStr];
+                const dayZh = getChineseDayOfWeek(dStr);
+                return `
+                    <div onclick="jumpToDate('${dStr}')"
+                        class="cursor-pointer bg-slate-900 hover:bg-slate-800/90 border border-slate-800 rounded-xl p-3 flex items-center justify-between transition">
+                        <div class="flex items-center gap-2.5">
+                            <span class="text-xs font-extrabold px-2 py-1 rounded-lg bg-slate-800 text-lime-300">${dayZh}</span>
+                            <span class="font-bold text-sm text-white">${dStr}</span>
+                        </div>
+                        <div class="flex items-center gap-3 text-xs">
+                            ${info.totalReps > 0 ? `<span class="text-lime-400 font-bold">重訓總計 ${info.totalReps} 次</span>` : ''}
+                            ${info.cardioMins > 0 ? `<span class="text-cyan-400 font-bold">有氧 ${info.cardioMins} 分</span>` : ''}
+                            <i class="fa-solid fa-chevron-right text-slate-600 text-[10px]"></i>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function renderEquipmentHistoryProgress() {
+            const equipId = document.getElementById('historyEquipmentSelect').value;
+            const timeline = document.getElementById('equipmentProgressTimeline');
+            const records = state.logs
+                .filter(l => l.equipId === equipId)
+                .sort((a, b) => b.date.localeCompare(a.date));
+
+            if (records.length === 0) {
+                timeline.innerHTML = `<div class="text-xs text-slate-500 py-4 text-center">此器材尚無歷史紀錄</div>`;
+                return;
+            }
+
+            timeline.innerHTML = records.map((r, i) => {
+                const dayZh = getChineseDayOfWeek(r.date);
+                if (r.type === 'strength') {
+                    const stats = getStrengthLogStats(r);
+                    const summaryStr = r.setDetails.map((s, idx) => `#${idx + 1}: ${s.weight}kg×${s.reps}下${s.isFailure ? '(力竭)' : ''}`).join(' / ');
+                    return `
+                        <div class="bg-slate-900/80 border border-slate-800 rounded-xl p-3 space-y-1">
+                            <div class="flex items-center justify-between">
+                                <span class="text-xs text-slate-400 font-semibold">${r.date} (${dayZh})</span>
+                                <span class="text-xs font-extrabold text-lime-400">共 ${stats.totalReps} 次 · 容量 ${stats.totalVolume} kg</span>
+                            </div>
+                            <div class="text-xs font-bold text-white">${summaryStr}</div>
+                            ${r.note ? `<div class="text-[11px] text-slate-400">${escapeHtml(r.note)}</div>` : ''}
+                        </div>
+                    `;
+                } else {
+                    return `
+                        <div class="bg-slate-900/80 border border-slate-800 rounded-xl p-3 flex items-center justify-between">
+                            <div>
+                                <div class="text-xs text-slate-400 font-semibold">${r.date} (${dayZh})</div>
+                                <div class="text-sm font-black text-cyan-300 mt-0.5">
+                                    坡度 ${r.incline}% · 速度 ${r.speed} · ${r.duration} 分鐘
+                                </div>
+                                ${r.note ? `<div class="text-[11px] text-slate-400 mt-0.5">${escapeHtml(r.note)}</div>` : ''}
+                            </div>
+                            ${i === 0 ? '<span class="text-[10px] font-bold px-2 py-0.5 rounded bg-cyan-400/15 text-cyan-300">最新</span>' : ''}
+                        </div>
+                    `;
+                }
+            }).join('');
+        }
+
+        function jumpToDate(dateStr) {
+            state.selectedDate = dateStr;
+            switchTab('strength');
+            refreshAllUI();
+            showToast(`已切換至 ${dateStr} (${getChineseDayOfWeek(dateStr)})`);
+        }
+
+        // ==================== DAILY TEXT REPORT & JSON BACKUP ====================
+        function openDailyReportModal() {
+            const dayName = getChineseDayOfWeek(state.selectedDate);
+            const dayLogs = state.logs.filter(l => l.date === state.selectedDate);
+            const strengthLogs = dayLogs.filter(l => l.type === 'strength');
+            const cardioLogs = dayLogs.filter(l => l.type === 'cardio');
+
+            let totalReps = 0;
+            let totalSets = 0;
+            let totalVolume = 0;
+
+            let lines = [];
+            lines.push(`📅 健訓筆記：${state.selectedDate} (${dayName})`);
+            lines.push(`🔥 持續訓練：連續 ${document.getElementById('statStreakDays').textContent} 天 (累積 ${document.getElementById('statTotalDays').textContent} 天)`);
+            lines.push(`────────────────────`);
+
+            if (strengthLogs.length > 0) {
+                lines.push(`【🏋️ 重訓器材紀錄】`);
+                strengthLogs.forEach((s, idx) => {
+                    const stats = getStrengthLogStats(s);
+                    totalReps += stats.totalReps;
+                    totalSets += stats.setsCount;
+                    totalVolume += stats.totalVolume;
+                    const eachSetStr = s.setDetails.map((d, i) => `第${i + 1}組 ${d.weight}kg×${d.reps}下${d.isFailure ? '(🔥力竭)' : ''}`).join('、');
+                    lines.push(`${idx + 1}. ${s.equipName} [共 ${stats.setsCount} 組 / ${stats.totalReps} 次]`);
+                    lines.push(`   └ ${eachSetStr}`);
+                    if (s.note) lines.push(`   📝 備註：${s.note}`);
+                });
+                lines.push(`👉 整天總健身次數：${totalReps} 次 (共 ${totalSets} 組 / 總容量 ${Math.round(totalVolume).toLocaleString()} kg)`);
+            } else {
+                lines.push(`【🏋️ 重訓器材紀錄】無`);
+            }
+
+            lines.push(``);
+            if (cardioLogs.length > 0) {
+                let totalMins = 0;
+                lines.push(`【🏃 有氧運動紀錄】`);
+                cardioLogs.forEach((c, idx) => {
+                    totalMins += Number(c.duration) || 0;
+                    lines.push(`${idx + 1}. ${c.equipName}：坡度 ${c.incline}% | 速度 ${c.speed} | 時長 ${c.duration} 分鐘${c.note ? ` (${c.note})` : ''}`);
+                });
+                lines.push(`👉 今日有氧總時長：${totalMins} 分鐘`);
+            } else {
+                lines.push(`【🏃 有氧運動紀錄】無`);
+            }
+
+            document.getElementById('dailyReportTextarea').value = lines.join('\n');
+            document.getElementById('dailyReportModal').classList.remove('hidden');
+        }
+
+        function closeDailyReportModal() {
+            document.getElementById('dailyReportModal').classList.add('hidden');
+        }
+
+        function copyDailyReportText() {
+            const textarea = document.getElementById('dailyReportTextarea');
+            textarea.select();
+            textarea.setSelectionRange(0, 99999);
+            try {
+                document.execCommand('copy');
+                showToast('已複製今日訓練日報至剪貼簿！');
+            } catch (e) {
+                showToast('複製失敗，請手動全選複製');
+            }
+        }
+
+        function exportBackupJSON() {
+            const dataStr = JSON.stringify({
+                exportedAt: new Date().toISOString(),
+                strengthEquipment: state.strengthEquipment,
+                cardioEquipment: state.cardioEquipment,
+                logs: state.logs
+            }, null, 2);
+
+            const blob = new Blob([dataStr], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `gym_notebook_backup_${state.selectedDate}.json`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+            showToast('已下載備份檔案 (.json)');
+        }
+
+        function importBackupFile(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                try {
+                    const parsed = JSON.parse(e.target.result);
+                    if (parsed.logs && Array.isArray(parsed.logs)) {
+                        state.strengthEquipment = parsed.strengthEquipment || DEFAULT_STRENGTH_EQUIPMENT;
+                        state.cardioEquipment = parsed.cardioEquipment || DEFAULT_CARDIO_EQUIPMENT;
+                        state.logs = parsed.logs.map(normalizeStrengthLog);
+                        saveState();
+                        refreshAllUI();
+                        showToast('成功匯入並還原所有訓練紀錄！');
+                    } else {
+                        showToast('備份檔案格式不正確');
+                    }
+                } catch (err) {
+                    showToast('無法解析備份檔案');
+                }
+            };
+            reader.readAsText(file);
+            event.target.value = '';
+        }
+
+        function openResetConfirmModal() {
+            document.getElementById('resetConfirmModal').classList.remove('hidden');
+        }
+
+        function closeResetConfirmModal() {
+            document.getElementById('resetConfirmModal').classList.add('hidden');
+        }
+
+        function confirmResetAllData() {
+            localStorage.removeItem(STORAGE_KEY);
+            seedInitialSampleData();
+            closeResetConfirmModal();
+            refreshAllUI();
+            showToast('已重置為初始範例狀態');
+        }
+
+        // ==================== UTILITIES & INIT ====================
+        function escapeHtml(str) {
+            if (!str) return '';
+            return String(str)
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;')
+                .replace(/'/g, '&#039;');
+        }
+
+        let toastTimeout = null;
+        function showToast(msg) {
+            const container = document.getElementById('toastContainer');
+            document.getElementById('toastMessage').textContent = msg;
+            container.classList.remove('opacity-0', 'translate-y-2');
+            container.classList.add('opacity-100', 'translate-y-0');
+            if (toastTimeout) clearTimeout(toastTimeout);
+            toastTimeout = setTimeout(() => {
+                container.classList.add('opacity-0', 'translate-y-2');
+                container.classList.remove('opacity-100', 'translate-y-0');
+            }, 2600);
+        }
+
+        function refreshAllUI() {
+            renderDateBar();
+            renderStreakAndStats();
+            renderStrengthCategories();
+            renderStrengthEquipmentGrid();
+            selectStrengthEquipment(state.selectedStrengthId, false);
+            renderCardioEquipmentGrid();
+            selectCardioEquipment(state.selectedCardioId, false);
+            renderDailySummaryAndLogs();
+            if (state.activeTab === 'history') {
+                renderHistoryTab();
+            }
+        }
+
+        window.onload = function() {
+            loadState();
+            document.getElementById('autoStartTimerToggle').checked = state.autoStartTimerOnCheck;
+            renderRestTimerUI();
+            renderDateBar();
+            renderStreakAndStats();
+            renderStrengthCategories();
+            selectStrengthEquipment(state.selectedStrengthId, true);
+            selectCardioEquipment(state.selectedCardioId, true);
+            renderDailySummaryAndLogs();
+        };
+    </script>
+</body>
+</html>
