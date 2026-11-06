@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>Pro 健訓器材筆記本 v2.3</title>
+  <title>健身筆記本 v2.4</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <script>
     tailwind.config = {
@@ -35,239 +35,246 @@
     .alert-pop { animation: bounce-alert 0.8s infinite; }
   </style>
 </head>
-<body class="bg-slate-950 text-slate-100 min-h-screen pb-28">
+<body class="bg-slate-950 text-slate-100 min-h-screen pb-28 flex flex-col justify-between">
 
-  <!-- 頂部導覽與日期列 (防斷行單行優化) -->
-  <header class="sticky top-0 z-30 bg-slate-900/95 backdrop-blur border-b border-slate-800 px-3 py-2.5 shadow-lg">
-    <div class="max-w-xl mx-auto flex flex-col gap-2">
-      <div class="flex items-center justify-between gap-1">
-        <div class="flex items-center gap-1.5 min-w-0">
-          <span class="text-xl shrink-0">🏋️</span>
-          <h1 class="font-extrabold text-base sm:text-lg tracking-tight bg-gradient-to-r from-emerald-400 to-cyan-400 bg-clip-text text-transparent whitespace-nowrap">健訓筆記本</h1>
-          <button onclick="openStreakModal()" id="streakBadge" title="點擊可調整連勝天數" class="text-xs bg-amber-500/20 active:bg-amber-500/30 text-amber-300 border border-amber-500/40 px-2 py-1 rounded-full font-bold whitespace-nowrap shrink-0">
-            🔥 連續 4 天 ✎
-          </button>
-        </div>
-        <div class="flex items-center gap-1.5 shrink-0">
-          <button onclick="openBackupModal()" class="text-xs bg-slate-800 active:bg-slate-700 text-slate-200 px-2.5 py-2 rounded-xl border border-slate-700 font-bold whitespace-nowrap">💾 備份</button>
-          <button onclick="copyDailyReport()" class="text-xs bg-emerald-600 active:bg-emerald-500 text-white px-2.5 py-2 rounded-xl font-bold shadow whitespace-nowrap">📋 複製日報</button>
-        </div>
-      </div>
-
-      <!-- 日期切換 -->
-      <div class="flex items-center justify-between bg-slate-850 border border-slate-800 rounded-xl px-2 py-1">
-        <button onclick="changeDate(-1)" class="w-10 h-9 flex items-center justify-center rounded-lg bg-slate-800/80 active:bg-slate-700 text-slate-200 text-sm font-bold shrink-0">◀</button>
-        <div class="flex items-center gap-1.5">
-          <input type="date" id="datePicker" onchange="onDateChange(this.value)" class="bg-transparent text-sm sm:text-base font-bold text-center focus:outline-none cursor-pointer">
-          <span id="weekdayLabel" class="text-xs sm:text-sm text-emerald-400 font-bold whitespace-nowrap">(星期五)</span>
-        </div>
-        <button onclick="changeDate(1)" class="w-10 h-9 flex items-center justify-center rounded-lg bg-slate-800/80 active:bg-slate-700 text-slate-200 text-sm font-bold shrink-0">▶</button>
-      </div>
-
-      <!-- 智慧組間計時器 (零折行緊湊大按鍵版) -->
-      <div id="timerBox" class="bg-slate-850 border border-slate-800 rounded-xl p-2 transition-all space-y-1.5">
+  <div>
+    <!-- 頂部導覽與日期列 (防斷行單行優化) -->
+    <header class="sticky top-0 z-30 bg-slate-900/95 backdrop-blur border-b border-slate-800 px-3 py-2.5 shadow-lg">
+      <div class="max-w-xl mx-auto flex flex-col gap-2">
         <div class="flex items-center justify-between gap-1">
-          <div class="flex items-center gap-1">
-            <span class="text-xs text-slate-400 font-bold whitespace-nowrap">⏱️休息</span>
-            <button onclick="adjustTimerSeconds(-30)" class="h-9 px-2 rounded-lg bg-slate-800 active:bg-slate-700 text-slate-200 font-bold text-xs border border-slate-700 whitespace-nowrap">-30s</button>
-            <span id="timerDisplay" class="font-mono font-extrabold text-lg sm:text-xl text-cyan-400 w-14 text-center whitespace-nowrap">01:30</span>
-            <button onclick="adjustTimerSeconds(30)" class="h-9 px-2 rounded-lg bg-slate-800 active:bg-slate-700 text-slate-200 font-bold text-xs border border-slate-700 whitespace-nowrap">+30s</button>
+          <div class="flex items-center gap-1.5 min-w-0">
+            <span class="text-xl shrink-0">🏋️</span>
+            <h1 class="font-extrabold text-base sm:text-lg tracking-tight bg-gradient-to-r from-emerald-400 to-cyan-400 bg-clip-text text-transparent whitespace-nowrap">健訓筆記本</h1>
+            <button onclick="openStreakModal()" id="streakBadge" title="點擊可調整連勝天數" class="text-xs bg-amber-500/20 active:bg-amber-500/30 text-amber-300 border border-amber-500/40 px-2 py-1 rounded-full font-bold whitespace-nowrap shrink-0">
+              🔥 連續 4 天 ✎
+            </button>
           </div>
-          <div class="flex items-center gap-1">
-            <button onclick="toggleTimer()" id="timerBtn" class="h-9 px-3 rounded-lg bg-cyan-600 active:bg-cyan-500 text-white text-xs font-extrabold shadow whitespace-nowrap">開始</button>
-            <button onclick="resetTimer()" class="h-9 w-9 flex items-center justify-center rounded-lg bg-slate-800 active:bg-slate-700 text-slate-300 font-bold border border-slate-700 text-sm shrink-0">↺</button>
+          <div class="flex items-center gap-1.5 shrink-0">
+            <button onclick="openBackupModal()" class="text-xs bg-slate-800 active:bg-slate-700 text-slate-200 px-2.5 py-2 rounded-xl border border-slate-700 font-bold whitespace-nowrap">💾 備份</button>
+            <button onclick="copyDailyReport()" class="text-xs bg-emerald-600 active:bg-emerald-500 text-white px-2.5 py-2 rounded-xl font-bold shadow whitespace-nowrap">📋 複製日報</button>
           </div>
         </div>
-        <!-- 下排：常用秒數快捷鍵 (5格單行不折行) -->
-        <div class="grid grid-cols-5 gap-1">
-          <button onclick="setTimerPreset(60)" class="text-xs py-1.5 rounded-lg bg-slate-900 active:bg-slate-700 text-slate-300 font-semibold border border-slate-800 whitespace-nowrap">1分</button>
-          <button onclick="setTimerPreset(90)" class="text-xs py-1.5 rounded-lg bg-slate-900 active:bg-slate-700 text-slate-300 font-semibold border border-slate-800 whitespace-nowrap">1分半</button>
-          <button onclick="setTimerPreset(120)" class="text-xs py-1.5 rounded-lg bg-slate-900 active:bg-slate-700 text-slate-300 font-semibold border border-slate-800 whitespace-nowrap">2分</button>
-          <button onclick="setTimerPreset(180)" class="text-xs py-1.5 rounded-lg bg-slate-900 active:bg-slate-700 text-slate-300 font-semibold border border-slate-800 whitespace-nowrap">3分</button>
-          <button onclick="setTimerPreset(300)" class="text-xs py-1.5 rounded-lg bg-slate-900 active:bg-slate-700 text-amber-300 font-bold border border-amber-500/30 whitespace-nowrap">5分</button>
+
+        <!-- 日期切換 -->
+        <div class="flex items-center justify-between bg-slate-850 border border-slate-800 rounded-xl px-2 py-1">
+          <button onclick="changeDate(-1)" class="w-10 h-9 flex items-center justify-center rounded-lg bg-slate-800/80 active:bg-slate-700 text-slate-200 text-sm font-bold shrink-0">◀</button>
+          <div class="flex items-center gap-1.5">
+            <input type="date" id="datePicker" onchange="onDateChange(this.value)" class="bg-transparent text-sm sm:text-base font-bold text-center focus:outline-none cursor-pointer">
+            <span id="weekdayLabel" class="text-xs sm:text-sm text-emerald-400 font-bold whitespace-nowrap">(星期五)</span>
+          </div>
+          <button onclick="changeDate(1)" class="w-10 h-9 flex items-center justify-center rounded-lg bg-slate-800/80 active:bg-slate-700 text-slate-200 text-sm font-bold shrink-0">▶</button>
+        </div>
+
+        <!-- 智慧組間計時器 (零折行緊湊大按鍵版) -->
+        <div id="timerBox" class="bg-slate-850 border border-slate-800 rounded-xl p-2 transition-all space-y-1.5">
+          <div class="flex items-center justify-between gap-1">
+            <div class="flex items-center gap-1">
+              <span class="text-xs text-slate-400 font-bold whitespace-nowrap">⏱️休息</span>
+              <button onclick="adjustTimerSeconds(-30)" class="h-9 px-2 rounded-lg bg-slate-800 active:bg-slate-700 text-slate-200 font-bold text-xs border border-slate-700 whitespace-nowrap">-30s</button>
+              <span id="timerDisplay" class="font-mono font-extrabold text-lg sm:text-xl text-cyan-400 w-14 text-center whitespace-nowrap">01:30</span>
+              <button onclick="adjustTimerSeconds(30)" class="h-9 px-2 rounded-lg bg-slate-800 active:bg-slate-700 text-slate-200 font-bold text-xs border border-slate-700 whitespace-nowrap">+30s</button>
+            </div>
+            <div class="flex items-center gap-1">
+              <button onclick="toggleTimer()" id="timerBtn" class="h-9 px-3 rounded-lg bg-cyan-600 active:bg-cyan-500 text-white text-xs font-extrabold shadow whitespace-nowrap">開始</button>
+              <button onclick="resetTimer()" class="h-9 w-9 flex items-center justify-center rounded-lg bg-slate-800 active:bg-slate-700 text-slate-300 font-bold border border-slate-700 text-sm shrink-0">↺</button>
+            </div>
+          </div>
+          <!-- 下排：常用秒數快捷鍵 (5格單行不折行) -->
+          <div class="grid grid-cols-5 gap-1">
+            <button onclick="setTimerPreset(60)" class="text-xs py-1.5 rounded-lg bg-slate-900 active:bg-slate-700 text-slate-300 font-semibold border border-slate-800 whitespace-nowrap">1分</button>
+            <button onclick="setTimerPreset(90)" class="text-xs py-1.5 rounded-lg bg-slate-900 active:bg-slate-700 text-slate-300 font-semibold border border-slate-800 whitespace-nowrap">1分半</button>
+            <button onclick="setTimerPreset(120)" class="text-xs py-1.5 rounded-lg bg-slate-900 active:bg-slate-700 text-slate-300 font-semibold border border-slate-800 whitespace-nowrap">2分</button>
+            <button onclick="setTimerPreset(180)" class="text-xs py-1.5 rounded-lg bg-slate-900 active:bg-slate-700 text-slate-300 font-semibold border border-slate-800 whitespace-nowrap">3分</button>
+            <button onclick="setTimerPreset(300)" class="text-xs py-1.5 rounded-lg bg-slate-900 active:bg-slate-700 text-amber-300 font-bold border border-amber-500/30 whitespace-nowrap">5分</button>
+          </div>
         </div>
       </div>
-    </div>
-  </header>
+    </header>
 
-  <main class="max-w-xl mx-auto px-3 pt-3 space-y-3.5">
+    <main class="max-w-xl mx-auto px-3 pt-3 space-y-3.5">
 
-    <!-- 數據總覽看板 -->
-    <section class="grid grid-cols-3 gap-2">
-      <div class="bg-slate-900 border border-slate-800 rounded-2xl p-2.5 text-center">
-        <div class="text-[11px] text-slate-400 font-medium whitespace-nowrap">整天總健身次數</div>
-        <div class="text-lg sm:text-xl font-extrabold text-emerald-400 mt-0.5"><span id="statTotalReps">0</span> <span class="text-xs font-normal text-slate-400">次</span></div>
-        <div class="text-[10px] text-slate-500" id="statTotalSets">共 0 組動作</div>
-      </div>
-      <div class="bg-slate-900 border border-slate-800 rounded-2xl p-2.5 text-center">
-        <div class="text-[11px] text-slate-400 font-medium whitespace-nowrap">今日重訓總容量</div>
-        <div class="text-lg sm:text-xl font-extrabold text-cyan-400 mt-0.5"><span id="statTotalVol">0</span> <span class="text-xs font-normal text-slate-400">kg</span></div>
-        <div class="text-[10px] text-slate-500">磅數自動折算kg</div>
-      </div>
-      <div class="bg-slate-900 border border-slate-800 rounded-2xl p-2.5 text-center">
-        <div class="text-[11px] text-slate-400 font-medium whitespace-nowrap">今日有氧總時長</div>
-        <div class="text-lg sm:text-xl font-extrabold text-amber-400 mt-0.5"><span id="statCardioMin">0</span> <span class="text-xs font-normal text-slate-400">分</span></div>
-        <div class="text-[10px] text-slate-500" id="statStreakTotal">累積訓練 4 天</div>
-      </div>
-    </section>
-
-    <!-- 分頁切換：重訓 / 有氧 / 進步曲線圖 -->
-    <div class="grid grid-cols-3 bg-slate-900 p-1 rounded-2xl border border-slate-800 text-xs sm:text-sm font-bold gap-1">
-      <button id="tabBtnGym" onclick="switchTab('gym')" class="py-2.5 rounded-xl bg-emerald-600 text-white shadow transition whitespace-nowrap">🏋️ 重訓器材</button>
-      <button id="tabBtnCardio" onclick="switchTab('cardio')" class="py-2.5 rounded-xl text-slate-400 hover:text-white transition whitespace-nowrap">🏃 有氧運動</button>
-      <button id="tabBtnChart" onclick="switchTab('chart')" class="py-2.5 rounded-xl text-slate-400 hover:text-white transition whitespace-nowrap">📈 趨勢曲線</button>
-    </div>
-
-    <!-- ================= 1. 重訓器材區塊 ================= -->
-    <section id="panelGym" class="space-y-4">
-      <div class="bg-slate-900 border border-slate-800 rounded-2xl p-3.5 space-y-3.5 shadow-md">
-        <div class="flex items-center justify-between">
-          <h2 class="text-sm sm:text-base font-bold text-emerald-400">1. 點選器材大方格 (自動帶入記憶)</h2>
-          <span id="memoryHintBadge" class="hidden text-xs bg-cyan-500/15 text-cyan-300 border border-cyan-500/30 px-2 py-0.5 rounded-full font-semibold whitespace-nowrap">💡 已載入記憶</span>
+      <!-- 數據總覽看板 -->
+      <section class="grid grid-cols-3 gap-2">
+        <div class="bg-slate-900 border border-slate-800 rounded-2xl p-2.5 text-center">
+          <div class="text-[11px] text-slate-400 font-medium whitespace-nowrap">整天總健身次數</div>
+          <div class="text-lg sm:text-xl font-extrabold text-emerald-400 mt-0.5"><span id="statTotalReps">0</span> <span class="text-xs font-normal text-slate-400">次</span></div>
+          <div class="text-[10px] text-slate-500" id="statTotalSets">共 0 組動作</div>
         </div>
-
-        <!-- 常用器材大方格卡片區 (一排2個大方格，顯示最高重量與上次組數) -->
-        <div id="gymQuickList" class="grid grid-cols-2 gap-2.5"></div>
-
-        <!-- 手動輸入器材名稱與 KG / LB 切換 -->
-        <div class="flex flex-col sm:flex-row gap-2 pt-1">
-          <input type="text" id="gymNameInput" placeholder="或直接輸入新器材名稱..." oninput="onExerciseNameInput(this.value)" class="flex-1 bg-slate-950 border border-slate-700 rounded-xl px-3.5 py-2.5 text-sm font-bold focus:outline-none focus:border-emerald-500">
-          <div class="grid grid-cols-2 bg-slate-950 border border-slate-700 rounded-xl p-1 gap-1 sm:w-44">
-            <button type="button" id="unitBtnKg" onclick="setWeightUnit('kg')" class="py-2 rounded-lg text-xs font-bold bg-emerald-600 text-white transition whitespace-nowrap">kg 公斤</button>
-            <button type="button" id="unitBtnLb" onclick="setWeightUnit('lb')" class="py-2 rounded-lg text-xs font-bold text-slate-400 hover:text-white transition whitespace-nowrap">lb 磅</button>
-          </div>
+        <div class="bg-slate-900 border border-slate-800 rounded-2xl p-2.5 text-center">
+          <div class="text-[11px] text-slate-400 font-medium whitespace-nowrap">今日重訓總容量</div>
+          <div class="text-lg sm:text-xl font-extrabold text-cyan-400 mt-0.5"><span id="statTotalVol">0</span> <span class="text-xs font-normal text-slate-400">kg</span></div>
+          <div class="text-[10px] text-slate-500">磅數自動折算kg</div>
         </div>
-
-        <!-- 上次記憶提示盒 -->
-        <div id="lastMemoryBox" class="hidden bg-slate-950/90 border border-slate-800 rounded-xl p-3 text-xs space-y-1">
-          <div class="flex items-center justify-between text-slate-400">
-            <span>📌 上次紀錄 (<span id="memDate"></span>)：</span>
-            <span id="overloadBadge" class="font-bold text-amber-400"></span>
-          </div>
-          <div id="memDetail" class="text-slate-200 font-medium leading-relaxed"></div>
+        <div class="bg-slate-900 border border-slate-800 rounded-2xl p-2.5 text-center">
+          <div class="text-[11px] text-slate-400 font-medium whitespace-nowrap">今日有氧總時長</div>
+          <div class="text-lg sm:text-xl font-extrabold text-amber-400 mt-0.5"><span id="statCardioMin">0</span> <span class="text-xs font-normal text-slate-400">分</span></div>
+          <div class="text-[10px] text-slate-500" id="statStreakTotal">累積訓練 4 天</div>
         </div>
+      </section>
 
-        <!-- 2. 逐組獨立調整區 (防擠壓零卡鍵版) -->
-        <div class="pt-3 border-t border-slate-800 space-y-2.5">
-          <div class="flex items-center justify-between gap-2">
-            <span class="text-sm sm:text-base font-bold text-emerald-400 whitespace-nowrap">2. 逐組重量與次數</span>
-            <label class="flex items-center gap-1.5 text-xs text-slate-300 cursor-pointer bg-slate-950 px-2.5 py-1.5 rounded-lg border border-slate-800 whitespace-nowrap">
-              <input type="checkbox" id="autoTimerCheck" checked class="w-4 h-4 accent-emerald-500 rounded"> 勾選自動計時
-            </label>
-          </div>
-
-          <!-- 全組快捷微調鈕 -->
-          <div class="grid grid-cols-3 gap-2">
-            <button type="button" onclick="batchAdjustWeight(-2.5)" class="text-xs font-bold bg-slate-800 active:bg-slate-700 py-2.5 rounded-xl border border-slate-700 whitespace-nowrap">全組 -2.5</button>
-            <button type="button" onclick="batchAdjustWeight(2.5)" class="text-xs font-bold bg-slate-800 active:bg-slate-700 py-2.5 rounded-xl border border-slate-700 whitespace-nowrap">全組 +2.5</button>
-            <button type="button" onclick="batchAdjustReps(1)" class="text-xs font-bold bg-slate-800 active:bg-slate-700 py-2.5 rounded-xl border border-slate-700 whitespace-nowrap">全組 +1下</button>
-          </div>
-
-          <!-- 逐組列表容器 -->
-          <div id="setsContainer" class="space-y-2.5"></div>
-
-          <div class="pt-1">
-            <button type="button" onclick="addSetRow()" class="w-full py-3 rounded-xl border-2 border-dashed border-slate-700 active:border-emerald-500 text-xs sm:text-sm text-slate-200 hover:text-emerald-400 font-bold transition bg-slate-950/50">＋ 新增一組 (複製上一組)</button>
-          </div>
-        </div>
-
-        <!-- 備註與儲存 -->
-        <div class="pt-3 border-t border-slate-800 flex flex-col sm:flex-row gap-2">
-          <input type="text" id="gymNoteInput" placeholder="備註 (選填，如：頂峰停頓1秒、最後一組力竭)" class="flex-1 bg-slate-950 border border-slate-700 rounded-xl px-3.5 py-3 text-xs sm:text-sm focus:outline-none focus:border-emerald-500">
-          <button type="button" onclick="saveGymLog()" class="bg-emerald-600 active:bg-emerald-500 text-white font-extrabold px-5 py-3.5 rounded-xl text-sm sm:text-base shadow-lg transition whitespace-nowrap">＋ 儲存本項紀錄</button>
-        </div>
+      <!-- 分頁切換：重訓 / 有氧 / 進步曲線圖 -->
+      <div class="grid grid-cols-3 bg-slate-900 p-1 rounded-2xl border border-slate-800 text-xs sm:text-sm font-bold gap-1">
+        <button id="tabBtnGym" onclick="switchTab('gym')" class="py-2.5 rounded-xl bg-emerald-600 text-white shadow transition whitespace-nowrap">🏋️ 重訓器材</button>
+        <button id="tabBtnCardio" onclick="switchTab('cardio')" class="py-2.5 rounded-xl text-slate-400 hover:text-white transition whitespace-nowrap">🏃 有氧運動</button>
+        <button id="tabBtnChart" onclick="switchTab('chart')" class="py-2.5 rounded-xl text-slate-400 hover:text-white transition whitespace-nowrap">📈 趨勢曲線</button>
       </div>
 
-      <!-- 當日重訓紀錄清單 -->
-      <div class="space-y-2">
-        <h3 class="text-xs sm:text-sm font-bold text-slate-400 px-1">📋 今日已登錄重訓項目</h3>
-        <div id="todayGymList" class="space-y-2"></div>
-      </div>
-    </section>
+      <!-- ================= 1. 重訓器材區塊 ================= -->
+      <section id="panelGym" class="space-y-4">
+        <div class="bg-slate-900 border border-slate-800 rounded-2xl p-3.5 space-y-3.5 shadow-md">
+          <div class="flex items-center justify-between">
+            <h2 class="text-sm sm:text-base font-bold text-emerald-400">1. 點選器材大方格 (自動帶入記憶)</h2>
+            <span id="memoryHintBadge" class="hidden text-xs bg-cyan-500/15 text-cyan-300 border border-cyan-500/30 px-2 py-0.5 rounded-full font-semibold whitespace-nowrap">💡 已載入記憶</span>
+          </div>
 
-    <!-- ================= 2. 有氧運動區塊 ================= -->
-    <section id="panelCardio" class="hidden space-y-4">
-      <div class="bg-slate-900 border border-slate-800 rounded-2xl p-3.5 space-y-3.5 shadow-md">
-        <div class="flex items-center justify-between">
-          <h2 class="text-sm sm:text-base font-bold text-amber-400">🏃 點選有氧器材大方格</h2>
-          <span id="cardioMemBadge" class="hidden text-xs bg-amber-500/15 text-amber-300 border border-amber-500/30 px-2.5 py-0.5 rounded-full font-semibold">💡 已帶入上次設定</span>
-        </div>
+          <!-- 常用器材大方格卡片區 (一排2個大方格，顯示最高重量與上次組數) -->
+          <div id="gymQuickList" class="grid grid-cols-2 gap-2.5"></div>
 
-        <!-- 有氧器材大方格 -->
-        <div id="cardioQuickList" class="grid grid-cols-2 gap-2.5"></div>
-
-        <input type="text" id="cardioNameInput" placeholder="有氧器材名稱 (如：跑步機、爬梯機、飛輪)" oninput="onCardioNameInput(this.value)" class="w-full bg-slate-950 border border-slate-700 rounded-xl px-3.5 py-2.5 text-sm font-bold focus:outline-none focus:border-amber-500">
-
-        <div class="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
-          <div class="bg-slate-950 border border-slate-800 rounded-xl p-2.5 flex sm:flex-col items-center justify-between">
-            <label class="text-xs sm:text-sm font-bold text-slate-300">坡度 Incline (%)</label>
-            <div class="flex items-center gap-1.5 sm:mt-1.5">
-              <button onclick="adjCardio('cardioIncline', -0.5)" class="w-10 h-10 rounded-lg bg-slate-800 active:bg-slate-700 text-base font-bold border border-slate-700">－</button>
-              <input type="number" step="0.5" id="cardioIncline" value="10" class="w-14 bg-transparent text-center font-extrabold text-lg text-amber-400 focus:outline-none">
-              <button onclick="adjCardio('cardioIncline', 0.5)" class="w-10 h-10 rounded-lg bg-slate-800 active:bg-slate-700 text-base font-bold border border-slate-700">＋</button>
+          <!-- 手動輸入器材名稱與 KG / LB 切換 -->
+          <div class="flex flex-col sm:flex-row gap-2 pt-1">
+            <input type="text" id="gymNameInput" placeholder="或直接輸入新器材名稱..." oninput="onExerciseNameInput(this.value)" class="flex-1 bg-slate-950 border border-slate-700 rounded-xl px-3.5 py-2.5 text-sm font-bold focus:outline-none focus:border-emerald-500">
+            <div class="grid grid-cols-2 bg-slate-950 border border-slate-700 rounded-xl p-1 gap-1 sm:w-44">
+              <button type="button" id="unitBtnKg" onclick="setWeightUnit('kg')" class="py-2 rounded-lg text-xs font-bold bg-emerald-600 text-white transition whitespace-nowrap">kg 公斤</button>
+              <button type="button" id="unitBtnLb" onclick="setWeightUnit('lb')" class="py-2 rounded-lg text-xs font-bold text-slate-400 hover:text-white transition whitespace-nowrap">lb 磅</button>
             </div>
           </div>
 
-          <div class="bg-slate-950 border border-slate-800 rounded-xl p-2.5 flex sm:flex-col items-center justify-between">
-            <label class="text-xs sm:text-sm font-bold text-slate-300">速度 Speed</label>
-            <div class="flex items-center gap-1.5 sm:mt-1.5">
-              <button onclick="adjCardio('cardioSpeed', -0.5)" class="w-10 h-10 rounded-lg bg-slate-800 active:bg-slate-700 text-base font-bold border border-slate-700">－</button>
-              <input type="number" step="0.1" id="cardioSpeed" value="5.5" class="w-14 bg-transparent text-center font-extrabold text-lg text-cyan-400 focus:outline-none">
-              <button onclick="adjCardio('cardioSpeed', 0.5)" class="w-10 h-10 rounded-lg bg-slate-800 active:bg-slate-700 text-base font-bold border border-slate-700">＋</button>
+          <!-- 上次記憶提示盒 -->
+          <div id="lastMemoryBox" class="hidden bg-slate-950/90 border border-slate-800 rounded-xl p-3 text-xs space-y-1">
+            <div class="flex items-center justify-between text-slate-400">
+              <span>📌 上次紀錄 (<span id="memDate"></span>)：</span>
+              <span id="overloadBadge" class="font-bold text-amber-400"></span>
+            </div>
+            <div id="memDetail" class="text-slate-200 font-medium leading-relaxed"></div>
+          </div>
+
+          <!-- 2. 逐組獨立調整區 (防擠壓零卡鍵版) -->
+          <div class="pt-3 border-t border-slate-800 space-y-2.5">
+            <div class="flex items-center justify-between gap-2">
+              <span class="text-sm sm:text-base font-bold text-emerald-400 whitespace-nowrap">2. 逐組重量與次數</span>
+              <label class="flex items-center gap-1.5 text-xs text-slate-300 cursor-pointer bg-slate-950 px-2.5 py-1.5 rounded-lg border border-slate-800 whitespace-nowrap">
+                <input type="checkbox" id="autoTimerCheck" checked class="w-4 h-4 accent-emerald-500 rounded"> 勾選自動計時
+              </label>
+            </div>
+
+            <!-- 全組快捷微調鈕 -->
+            <div class="grid grid-cols-3 gap-2">
+              <button type="button" onclick="batchAdjustWeight(-2.5)" class="text-xs font-bold bg-slate-800 active:bg-slate-700 py-2.5 rounded-xl border border-slate-700 whitespace-nowrap">全組 -2.5</button>
+              <button type="button" onclick="batchAdjustWeight(2.5)" class="text-xs font-bold bg-slate-800 active:bg-slate-700 py-2.5 rounded-xl border border-slate-700 whitespace-nowrap">全組 +2.5</button>
+              <button type="button" onclick="batchAdjustReps(1)" class="text-xs font-bold bg-slate-800 active:bg-slate-700 py-2.5 rounded-xl border border-slate-700 whitespace-nowrap">全組 +1下</button>
+            </div>
+
+            <!-- 逐組列表容器 -->
+            <div id="setsContainer" class="space-y-2.5"></div>
+
+            <div class="pt-1">
+              <button type="button" onclick="addSetRow()" class="w-full py-3 rounded-xl border-2 border-dashed border-slate-700 active:border-emerald-500 text-xs sm:text-sm text-slate-200 hover:text-emerald-400 font-bold transition bg-slate-950/50">＋ 新增一組 (複製上一組)</button>
             </div>
           </div>
 
-          <div class="bg-slate-950 border border-slate-800 rounded-xl p-2.5 flex sm:flex-col items-center justify-between">
-            <label class="text-xs sm:text-sm font-bold text-slate-300">時長 (分鐘)</label>
-            <div class="flex items-center gap-1.5 sm:mt-1.5">
-              <button onclick="adjCardio('cardioDuration', -5)" class="w-10 h-10 rounded-lg bg-slate-800 active:bg-slate-700 text-base font-bold border border-slate-700">－</button>
-              <input type="number" step="1" id="cardioDuration" value="15" class="w-14 bg-transparent text-center font-extrabold text-lg text-emerald-400 focus:outline-none">
-              <button onclick="adjCardio('cardioDuration', 5)" class="w-10 h-10 rounded-lg bg-slate-800 active:bg-slate-700 text-base font-bold border border-slate-700">＋</button>
+          <!-- 備註與儲存 -->
+          <div class="pt-3 border-t border-slate-800 flex flex-col sm:flex-row gap-2">
+            <input type="text" id="gymNoteInput" placeholder="備註 (選填，如：頂峰停頓1秒、最後一組力竭)" class="flex-1 bg-slate-950 border border-slate-700 rounded-xl px-3.5 py-3 text-xs sm:text-sm focus:outline-none focus:border-emerald-500">
+            <button type="button" onclick="saveGymLog()" class="bg-emerald-600 active:bg-emerald-500 text-white font-extrabold px-5 py-3.5 rounded-xl text-sm sm:text-base shadow-lg transition whitespace-nowrap">＋ 儲存本項紀錄</button>
+          </div>
+        </div>
+
+        <!-- 當日重訓紀錄清單 -->
+        <div class="space-y-2">
+          <h3 class="text-xs sm:text-sm font-bold text-slate-400 px-1">📋 今日已登錄重訓項目</h3>
+          <div id="todayGymList" class="space-y-2"></div>
+        </div>
+      </section>
+
+      <!-- ================= 2. 有氧運動區塊 ================= -->
+      <section id="panelCardio" class="hidden space-y-4">
+        <div class="bg-slate-900 border border-slate-800 rounded-2xl p-3.5 space-y-3.5 shadow-md">
+          <div class="flex items-center justify-between">
+            <h2 class="text-sm sm:text-base font-bold text-amber-400">🏃 點選有氧器材大方格</h2>
+            <span id="cardioMemBadge" class="hidden text-xs bg-amber-500/15 text-amber-300 border border-amber-500/30 px-2.5 py-0.5 rounded-full font-semibold">💡 已帶入上次設定</span>
+          </div>
+
+          <!-- 有氧器材大方格 -->
+          <div id="cardioQuickList" class="grid grid-cols-2 gap-2.5"></div>
+
+          <input type="text" id="cardioNameInput" placeholder="有氧器材名稱 (如：跑步機、爬梯機、飛輪)" oninput="onCardioNameInput(this.value)" class="w-full bg-slate-950 border border-slate-700 rounded-xl px-3.5 py-2.5 text-sm font-bold focus:outline-none focus:border-amber-500">
+
+          <div class="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
+            <div class="bg-slate-950 border border-slate-800 rounded-xl p-2.5 flex sm:flex-col items-center justify-between">
+              <label class="text-xs sm:text-sm font-bold text-slate-300">坡度 Incline (%)</label>
+              <div class="flex items-center gap-1.5 sm:mt-1.5">
+                <button onclick="adjCardio('cardioIncline', -0.5)" class="w-10 h-10 rounded-lg bg-slate-800 active:bg-slate-700 text-base font-bold border border-slate-700">－</button>
+                <input type="number" step="0.5" id="cardioIncline" value="10" class="w-14 bg-transparent text-center font-extrabold text-lg text-amber-400 focus:outline-none">
+                <button onclick="adjCardio('cardioIncline', 0.5)" class="w-10 h-10 rounded-lg bg-slate-800 active:bg-slate-700 text-base font-bold border border-slate-700">＋</button>
+              </div>
+            </div>
+
+            <div class="bg-slate-950 border border-slate-800 rounded-xl p-2.5 flex sm:flex-col items-center justify-between">
+              <label class="text-xs sm:text-sm font-bold text-slate-300">速度 Speed</label>
+              <div class="flex items-center gap-1.5 sm:mt-1.5">
+                <button onclick="adjCardio('cardioSpeed', -0.5)" class="w-10 h-10 rounded-lg bg-slate-800 active:bg-slate-700 text-base font-bold border border-slate-700">－</button>
+                <input type="number" step="0.1" id="cardioSpeed" value="5.5" class="w-14 bg-transparent text-center font-extrabold text-lg text-cyan-400 focus:outline-none">
+                <button onclick="adjCardio('cardioSpeed', 0.5)" class="w-10 h-10 rounded-lg bg-slate-800 active:bg-slate-700 text-base font-bold border border-slate-700">＋</button>
+              </div>
+            </div>
+
+            <div class="bg-slate-950 border border-slate-800 rounded-xl p-2.5 flex sm:flex-col items-center justify-between">
+              <label class="text-xs sm:text-sm font-bold text-slate-300">時長 (分鐘)</label>
+              <div class="flex items-center gap-1.5 sm:mt-1.5">
+                <button onclick="adjCardio('cardioDuration', -5)" class="w-10 h-10 rounded-lg bg-slate-800 active:bg-slate-700 text-base font-bold border border-slate-700">－</button>
+                <input type="number" step="1" id="cardioDuration" value="15" class="w-14 bg-transparent text-center font-extrabold text-lg text-emerald-400 focus:outline-none">
+                <button onclick="adjCardio('cardioDuration', 5)" class="w-10 h-10 rounded-lg bg-slate-800 active:bg-slate-700 text-base font-bold border border-slate-700">＋</button>
+              </div>
             </div>
           </div>
-        </div>
 
-        <div class="flex flex-col sm:flex-row gap-2 pt-1">
-          <input type="text" id="cardioNoteInput" placeholder="有氧備註 (如：消耗 330 kcal、Zone 2 快走)" class="flex-1 bg-slate-950 border border-slate-700 rounded-xl px-3.5 py-3 text-xs sm:text-sm focus:outline-none focus:border-amber-500">
-          <button onclick="saveCardioLog()" class="bg-amber-600 active:bg-amber-500 text-white font-extrabold px-5 py-3.5 rounded-xl text-sm sm:text-base shadow-lg transition whitespace-nowrap">＋ 儲存有氧紀錄</button>
-        </div>
-      </div>
-
-      <div class="space-y-2">
-        <h3 class="text-xs sm:text-sm font-bold text-slate-400 px-1">📋 今日已登錄有氧項目</h3>
-        <div id="todayCardioList" class="space-y-2"></div>
-      </div>
-    </section>
-
-    <!-- ================= 3. 趨勢曲線圖區塊 ================= -->
-    <section id="panelChart" class="hidden space-y-4">
-      <div class="bg-slate-900 border border-slate-800 rounded-2xl p-4 space-y-4 shadow-md">
-        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
-          <h2 class="text-base font-bold text-cyan-400">📈 訓練數據進步曲線圖</h2>
-          <div class="grid grid-cols-2 bg-slate-950 border border-slate-800 rounded-xl p-1 text-xs gap-1">
-            <button id="chartModeDaily" onclick="setChartMode('daily')" class="px-3 py-2 rounded-lg bg-cyan-600 text-white font-bold whitespace-nowrap">每日總容量/次數</button>
-            <button id="chartModeEx" onclick="setChartMode('exercise')" class="px-3 py-2 rounded-lg text-slate-400 hover:text-white font-bold whitespace-nowrap">單一器材突破</button>
+          <div class="flex flex-col sm:flex-row gap-2 pt-1">
+            <input type="text" id="cardioNoteInput" placeholder="有氧備註 (如：消耗 330 kcal、Zone 2 快走)" class="flex-1 bg-slate-950 border border-slate-700 rounded-xl px-3.5 py-3 text-xs sm:text-sm focus:outline-none focus:border-amber-500">
+            <button onclick="saveCardioLog()" class="bg-amber-600 active:bg-amber-500 text-white font-extrabold px-5 py-3.5 rounded-xl text-sm sm:text-base shadow-lg transition whitespace-nowrap">＋ 儲存有氧紀錄</button>
           </div>
         </div>
 
-        <div id="chartExerciseSelectorBox" class="hidden flex items-center gap-2">
-          <span class="text-xs sm:text-sm text-slate-400 font-medium whitespace-nowrap">選擇器材：</span>
-          <select id="chartExerciseSelect" onchange="renderProgressChart()" class="flex-1 bg-slate-950 border border-slate-700 rounded-xl px-3 py-2.5 text-xs sm:text-sm text-slate-200 font-bold focus:outline-none focus:border-cyan-500"></select>
+        <div class="space-y-2">
+          <h3 class="text-xs sm:text-sm font-bold text-slate-400 px-1">📋 今日已登錄有氧項目</h3>
+          <div id="todayCardioList" class="space-y-2"></div>
         </div>
+      </section>
 
-        <div class="bg-slate-950 border border-slate-800/80 rounded-2xl p-3">
-          <div id="chartTitle" class="text-xs text-slate-400 mb-2 font-semibold">近期訓練日總容量趨勢 (kg)</div>
-          <div id="svgChartContainer" class="w-full h-56 flex items-center justify-center"></div>
+      <!-- ================= 3. 趨勢曲線圖區塊 ================= -->
+      <section id="panelChart" class="hidden space-y-4">
+        <div class="bg-slate-900 border border-slate-800 rounded-2xl p-4 space-y-4 shadow-md">
+          <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+            <h2 class="text-base font-bold text-cyan-400">📈 訓練數據進步曲線圖</h2>
+            <div class="grid grid-cols-2 bg-slate-950 border border-slate-800 rounded-xl p-1 text-xs gap-1">
+              <button id="chartModeDaily" onclick="setChartMode('daily')" class="px-3 py-2 rounded-lg bg-cyan-600 text-white font-bold whitespace-nowrap">每日總容量/次數</button>
+              <button id="chartModeEx" onclick="setChartMode('exercise')" class="px-3 py-2 rounded-lg text-slate-400 hover:text-white font-bold whitespace-nowrap">單一器材突破</button>
+            </div>
+          </div>
+
+          <div id="chartExerciseSelectorBox" class="hidden flex items-center gap-2">
+            <span class="text-xs sm:text-sm text-slate-400 font-medium whitespace-nowrap">選擇器材：</span>
+            <select id="chartExerciseSelect" onchange="renderProgressChart()" class="flex-1 bg-slate-950 border border-slate-700 rounded-xl px-3 py-2.5 text-xs sm:text-sm text-slate-200 font-bold focus:outline-none focus:border-cyan-500"></select>
+          </div>
+
+          <div class="bg-slate-950 border border-slate-800/80 rounded-2xl p-3">
+            <div id="chartTitle" class="text-xs text-slate-400 mb-2 font-semibold">近期訓練日總容量趨勢 (kg)</div>
+            <div id="svgChartContainer" class="w-full h-56 flex items-center justify-center"></div>
+          </div>
+
+          <div class="space-y-2 pt-2 border-t border-slate-800">
+            <div class="text-xs font-bold text-slate-400">📅 點擊歷史訓練日快速跳轉</div>
+            <div id="historyDateChips" class="flex flex-wrap gap-2"></div>
+          </div>
         </div>
+      </section>
 
-        <div class="space-y-2 pt-2 border-t border-slate-800">
-          <div class="text-xs font-bold text-slate-400">📅 點擊歷史訓練日快速跳轉</div>
-          <div id="historyDateChips" class="flex flex-wrap gap-2"></div>
-        </div>
-      </div>
-    </section>
+    </main>
+  </div>
 
-  </main>
+  <!-- 頁尾署名 -->
+  <footer class="mt-12 py-4 text-center text-xs text-slate-500 border-t border-slate-900">
+    made by Lawson Yuan
+  </footer>
 
   <!-- 🔔 碼表結束：全螢幕強效提醒彈跳視窗 -->
   <div id="timerAlertModal" class="fixed inset-0 z-50 hidden bg-black/80 backdrop-blur-md flex items-center justify-center p-4">
@@ -310,7 +317,7 @@
     </div>
   </div>
 
-  <!-- 備份與還原 Modal -->
+  <!-- 備份與還原 Modal[span_0](start_span)[span_0](end_span) -->
   <div id="backupModal" class="fixed inset-0 z-50 hidden bg-black/75 backdrop-blur-sm flex items-center justify-center p-4">
     <div class="bg-slate-900 border border-slate-700 rounded-2xl max-w-md w-full p-5 space-y-4 shadow-2xl">
       <div class="flex items-center justify-between">
@@ -318,7 +325,7 @@
         <button onclick="closeBackupModal()" class="w-9 h-9 rounded-lg bg-slate-800 text-slate-300 hover:text-white text-lg">✕</button>
       </div>
       <p class="text-xs sm:text-sm text-slate-400 leading-relaxed">
-        您的健身紀錄會自動保存在手機瀏覽器中。若要更換手機或雙重保險，可下載備份檔或讀取備份檔還原。
+        您的健身紀錄會自動保存在手機瀏覽器中[span_1](start_span)[span_1](end_span)。若要更換手機或雙重保險，可下載備份檔或讀取備份檔還原[span_2](start_span)[span_2](end_span)。
       </p>
       <div class="flex flex-col sm:flex-row gap-2.5">
         <button onclick="downloadBackupFile()" class="flex-1 bg-emerald-600 active:bg-emerald-500 text-white text-sm font-bold py-3.5 rounded-xl">⬇️ 下載 JSON 備份檔</button>
@@ -345,7 +352,7 @@
     let currentUnit = 'kg';
     let currentSets = [];
     let chartMode = 'daily';
-    let manualStreakFloor = 4; // 預設保底連續 4 天
+    let manualStreakFloor = 4;
 
     const SEED_LOGS = {
       "2026-10-30": {
@@ -390,7 +397,7 @@
     let allLogs = {};
     let gymMemory = {};
     let cardioMemory = {};
-    let gymMaxRecord = {}; // 紀錄各器材歷史最高重量
+    let gymMaxRecord = {};
 
     function initApp() {
       const savedLogs = localStorage.getItem(STORAGE_KEY_LOGS);
@@ -446,7 +453,6 @@
               sets: JSON.parse(JSON.stringify(item.sets)),
               note: item.note || ''
             };
-            // 計算歷史最高重量 (PR)
             const sessionMax = Math.max(...item.sets.map(s => Number(s.weight) || 0), 0);
             if (!gymMaxRecord[item.name] || sessionMax >= gymMaxRecord[item.name].maxWeight) {
               gymMaxRecord[item.name] = {
@@ -471,7 +477,6 @@
         }
       });
 
-      // 若 gymMemory 有但還沒進 gymMaxRecord 的也補齊
       Object.keys(gymMemory).forEach(name => {
         if (!gymMaxRecord[name] && gymMemory[name].sets?.length) {
           const m = gymMemory[name];
@@ -523,7 +528,7 @@
     function selectGymExercise(name) {
       document.getElementById('gymNameInput').value = name;
       onExerciseNameInput(name);
-      renderQuickButtons(); // 更新大方格選中亮框狀態
+      renderQuickButtons();
     }
 
     function onExerciseNameInput(name) {
@@ -576,12 +581,10 @@
       }
     }
 
-    // 🔧 徹底修好按鈕超出邊界與斷行問題的逐組卡片
     function renderSetsEditor() {
       const container = document.getElementById('setsContainer');
       container.innerHTML = currentSets.map((s, i) => `
         <div class="bg-slate-950 border-2 ${s.done ? 'border-emerald-500/70 bg-emerald-950/15' : 'border-slate-800'} rounded-2xl p-2.5 space-y-2 transition">
-          <!-- 上層：單行不折行的完成按鈕 + 力竭 + 刪除 -->
           <div class="flex items-center justify-between gap-1.5">
             <button type="button" onclick="toggleSetDone(${i})" class="flex-1 h-10 px-3 rounded-xl text-xs sm:text-sm font-extrabold flex items-center justify-center gap-1.5 whitespace-nowrap transition ${s.done ? 'bg-emerald-600 text-white shadow' : 'bg-slate-800 text-slate-200 border border-slate-700'}">
               <span>${s.done ? '✓' : '○'} 第 ${i+1} 組</span>
@@ -597,9 +600,7 @@
             ` : ''}
           </div>
 
-          <!-- 下層：左右兩格嚴格鎖定寬度，保證 + 號不超出黑框 -->
           <div class="grid grid-cols-2 gap-2">
-            <!-- 重量調整盒 -->
             <div class="bg-slate-900 border border-slate-800 rounded-xl p-1 flex items-center justify-between min-w-0">
               <button type="button" onclick="adjSetWeight(${i}, -2.5)" class="w-9 h-9 sm:w-10 sm:h-10 shrink-0 rounded-lg bg-slate-800 active:bg-slate-700 text-base font-extrabold text-slate-200 border border-slate-700 flex items-center justify-center">－</button>
               <div class="flex flex-col items-center justify-center min-w-0 flex-1 px-0.5">
@@ -609,7 +610,6 @@
               <button type="button" onclick="adjSetWeight(${i}, 2.5)" class="w-9 h-9 sm:w-10 sm:h-10 shrink-0 rounded-lg bg-slate-800 active:bg-slate-700 text-base font-extrabold text-slate-200 border border-slate-700 flex items-center justify-center">＋</button>
             </div>
 
-            <!-- 次數調整盒 -->
             <div class="bg-slate-900 border border-slate-800 rounded-xl p-1 flex items-center justify-between min-w-0">
               <button type="button" onclick="adjSetReps(${i}, -1)" class="w-9 h-9 sm:w-10 sm:h-10 shrink-0 rounded-lg bg-slate-800 active:bg-slate-700 text-base font-extrabold text-slate-200 border border-slate-700 flex items-center justify-center">－</button>
               <div class="flex flex-col items-center justify-center min-w-0 flex-1 px-0.5">
@@ -953,7 +953,7 @@
       document.getElementById('statCardioMin').textContent = cardioMin;
 
       const { finalStreak, totalActiveDays } = calculateCurrentStreak();
-      document.getElementById('streakBadge').innerHTML = `🔥 連續 ${finalStreak} 天 ✎`;
+      document.getElementById('streakBadge').innerHTML = `🔥 連續 ${finalStreak}天 ✎`;
       document.getElementById('statStreakTotal').textContent = `累積訓練 ${totalActiveDays} 天`;
     }
 
