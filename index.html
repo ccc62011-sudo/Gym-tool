@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>Pro 健訓器材筆記本 v2.0</title>
+  <title>Pro 健訓器材筆記本 v2.2</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <script>
     tailwind.config = {
@@ -21,54 +21,73 @@
     body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; -webkit-tap-highlight-color: transparent; }
     .no-scrollbar::-webkit-scrollbar { display: none; }
     .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+    input[type="number"]::-webkit-inner-spin-button,
+    input[type="number"]::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
     @keyframes pulse-border {
-      0%, 100% { border-color: rgba(16, 185, 129, 0.9); box-shadow: 0 0 15px rgba(16, 185, 129, 0.4); }
+      0%, 100% { border-color: rgba(16, 185, 129, 0.95); box-shadow: 0 0 18px rgba(16, 185, 129, 0.45); }
       50% { border-color: rgba(16, 185, 129, 0.2); box-shadow: none; }
     }
+    @keyframes bounce-alert {
+      0%, 100% { transform: scale(1); }
+      50% { transform: scale(1.04); }
+    }
     .timer-done { animation: pulse-border 1s infinite; }
+    .alert-pop { animation: bounce-alert 0.8s infinite; }
+    .touch-btn { min-height: 44px; min-width: 44px; }
   </style>
 </head>
-<body class="bg-slate-950 text-slate-100 min-h-screen pb-24">
+<body class="bg-slate-950 text-slate-100 min-h-screen pb-28">
 
   <!-- 頂部導覽與日期列 -->
-  <header class="sticky top-0 z-30 bg-slate-900/95 backdrop-blur border-b border-slate-800 px-3 py-2.5 shadow-lg">
-    <div class="max-w-xl mx-auto flex flex-col gap-2">
+  <header class="sticky top-0 z-30 bg-slate-900/95 backdrop-blur border-b border-slate-800 px-3 py-3 shadow-lg">
+    <div class="max-w-xl mx-auto flex flex-col gap-2.5">
       <div class="flex items-center justify-between">
         <div class="flex items-center gap-2">
-          <span class="text-xl">🏋️</span>
-          <h1 class="font-bold text-base sm:text-lg tracking-tight bg-gradient-to-r from-emerald-400 to-cyan-400 bg-clip-text text-transparent">健訓器材筆記本</h1>
-          <span id="streakBadge" class="text-xs bg-amber-500/20 text-amber-300 border border-amber-500/30 px-2 py-0.5 rounded-full font-medium">🔥 連續 1 天</span>
+          <span class="text-2xl">🏋️</span>
+          <h1 class="font-bold text-lg tracking-tight bg-gradient-to-r from-emerald-400 to-cyan-400 bg-clip-text text-transparent">健訓筆記本</h1>
+          <!-- 點擊可手動調整連勝成就 -->
+          <button onclick="openStreakModal()" id="streakBadge" title="點擊可調整連勝天數" class="text-xs bg-amber-500/20 active:bg-amber-500/30 text-amber-300 border border-amber-500/40 px-2.5 py-1 rounded-full font-bold flex items-center gap-1 shadow-sm">
+            🔥 連續 1 天 ✎
+          </button>
         </div>
-        <div class="flex items-center gap-1.5">
-          <button onclick="openBackupModal()" class="text-xs bg-slate-800 hover:bg-slate-700 text-slate-300 px-2.5 py-1.5 rounded-lg border border-slate-700 transition">💾 備份</button>
-          <button onclick="copyDailyReport()" class="text-xs bg-emerald-600 hover:bg-emerald-500 text-white px-2.5 py-1.5 rounded-lg font-medium shadow transition flex items-center gap-1">📋 複製日報</button>
+        <div class="flex items-center gap-2">
+          <button onclick="openBackupModal()" class="text-xs sm:text-sm bg-slate-800 active:bg-slate-700 text-slate-200 px-3 py-2 rounded-xl border border-slate-700 font-medium transition">💾 備份</button>
+          <button onclick="copyDailyReport()" class="text-xs sm:text-sm bg-emerald-600 active:bg-emerald-500 text-white px-3 py-2 rounded-xl font-bold shadow transition flex items-center gap-1">📋 複製日報</button>
         </div>
       </div>
 
-      <!-- 日期切換與組間休息計時器 -->
-      <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 items-center">
-        <div class="flex items-center justify-between bg-slate-850 border border-slate-800 rounded-xl px-2 py-1">
-          <button onclick="changeDate(-1)" class="p-1.5 text-slate-400 hover:text-white">◀</button>
-          <div class="flex items-center gap-1.5">
-            <input type="date" id="datePicker" onchange="onDateChange(this.value)" class="bg-transparent text-xs sm:text-sm font-semibold text-center focus:outline-none cursor-pointer">
-            <span id="weekdayLabel" class="text-xs text-emerald-400 font-medium">(週四)</span>
-          </div>
-          <button onclick="changeDate(1)" class="p-1.5 text-slate-400 hover:text-white">▶</button>
+      <!-- 日期切換 -->
+      <div class="flex items-center justify-between bg-slate-850 border border-slate-800 rounded-2xl px-2 py-1.5">
+        <button onclick="changeDate(-1)" class="w-11 h-10 flex items-center justify-center rounded-xl bg-slate-800/80 active:bg-slate-700 text-slate-200 text-base font-bold">◀</button>
+        <div class="flex items-center gap-2">
+          <input type="date" id="datePicker" onchange="onDateChange(this.value)" class="bg-transparent text-base font-bold text-center focus:outline-none cursor-pointer">
+          <span id="weekdayLabel" class="text-sm text-emerald-400 font-bold">(週五)</span>
         </div>
+        <button onclick="changeDate(1)" class="w-11 h-10 flex items-center justify-center rounded-xl bg-slate-800/80 active:bg-slate-700 text-slate-200 text-base font-bold">▶</button>
+      </div>
 
-        <!-- 智慧組間計時器 -->
-        <div id="timerBox" class="flex items-center justify-between bg-slate-850 border border-slate-800 rounded-xl px-2.5 py-1 transition-all">
-          <div class="flex items-center gap-1.5">
-            <span class="text-xs text-slate-400">⏱️休息</span>
-            <span id="timerDisplay" class="font-mono font-bold text-sm sm:text-base text-cyan-400 w-12 text-center">01:30</span>
-          </div>
+      <!-- 智慧組間計時器 (支援加減秒數與最高5分鐘預設) -->
+      <div id="timerBox" class="bg-slate-850 border border-slate-800 rounded-2xl p-2.5 transition-all space-y-2">
+        <!-- 上排：時間顯示、加減秒數按鈕、開始與重置 -->
+        <div class="flex items-center justify-between gap-1.5">
           <div class="flex items-center gap-1">
-            <button onclick="setTimerPreset(60)" class="text-[11px] px-1.5 py-0.5 rounded bg-slate-800 hover:bg-slate-700 text-slate-300">60s</button>
-            <button onclick="setTimerPreset(90)" class="text-[11px] px-1.5 py-0.5 rounded bg-slate-800 hover:bg-slate-700 text-slate-300">90s</button>
-            <button onclick="setTimerPreset(120)" class="text-[11px] px-1.5 py-0.5 rounded bg-slate-800 hover:bg-slate-700 text-slate-300">120s</button>
-            <button onclick="toggleTimer()" id="timerBtn" class="text-xs px-2 py-0.5 rounded bg-cyan-600 hover:bg-cyan-500 text-white font-medium ml-0.5">開始</button>
-            <button onclick="resetTimer()" class="text-xs px-1.5 py-0.5 rounded bg-slate-800 text-slate-400 hover:text-white">↺</button>
+            <span class="text-xs text-slate-400 font-medium">⏱️休息</span>
+            <button onclick="adjustTimerSeconds(-30)" class="px-2.5 py-1.5 rounded-xl bg-slate-800 active:bg-slate-700 text-slate-200 font-extrabold text-xs border border-slate-700">－30s</button>
+            <span id="timerDisplay" class="font-mono font-extrabold text-xl sm:text-2xl text-cyan-400 w-16 text-center">01:30</span>
+            <button onclick="adjustTimerSeconds(30)" class="px-2.5 py-1.5 rounded-xl bg-slate-800 active:bg-slate-700 text-slate-200 font-extrabold text-xs border border-slate-700">＋30s</button>
           </div>
+          <div class="flex items-center gap-1.5">
+            <button onclick="toggleTimer()" id="timerBtn" class="text-xs sm:text-sm px-4 py-2 rounded-xl bg-cyan-600 active:bg-cyan-500 text-white font-extrabold shadow">開始</button>
+            <button onclick="resetTimer()" class="text-xs sm:text-sm px-2.5 py-2 rounded-xl bg-slate-800 active:bg-slate-700 text-slate-300 font-bold border border-slate-700">↺</button>
+          </div>
+        </div>
+        <!-- 下排：常用秒數快捷鍵 (含 3分鐘 / 5分鐘) -->
+        <div class="grid grid-cols-5 gap-1.5">
+          <button onclick="setTimerPreset(60)" class="text-xs py-1.5 rounded-lg bg-slate-900 active:bg-slate-700 text-slate-300 font-semibold border border-slate-800">1分 (60s)</button>
+          <button onclick="setTimerPreset(90)" class="text-xs py-1.5 rounded-lg bg-slate-900 active:bg-slate-700 text-slate-300 font-semibold border border-slate-800">1分半</button>
+          <button onclick="setTimerPreset(120)" class="text-xs py-1.5 rounded-lg bg-slate-900 active:bg-slate-700 text-slate-300 font-semibold border border-slate-800">2分</button>
+          <button onclick="setTimerPreset(180)" class="text-xs py-1.5 rounded-lg bg-slate-900 active:bg-slate-700 text-slate-300 font-semibold border border-slate-800">3分</button>
+          <button onclick="setTimerPreset(300)" class="text-xs py-1.5 rounded-lg bg-slate-900 active:bg-slate-700 text-amber-300 font-bold border border-amber-500/30">5分 (大重量)</button>
         </div>
       </div>
     </div>
@@ -77,196 +96,229 @@
   <main class="max-w-xl mx-auto px-3 pt-3 space-y-4">
 
     <!-- 數據總覽看板 -->
-    <section class="grid grid-cols-3 gap-2">
-      <div class="bg-slate-900 border border-slate-800 rounded-xl p-2.5 text-center">
-        <div class="text-[11px] text-slate-400">整天總健身次數</div>
-        <div class="text-lg sm:text-xl font-extrabold text-emerald-400 mt-0.5"><span id="statTotalReps">0</span> <span class="text-xs font-normal text-slate-400">次</span></div>
-        <div class="text-[10px] text-slate-500" id="statTotalSets">共 0 組動作</div>
+    <section class="grid grid-cols-3 gap-2.5">
+      <div class="bg-slate-900 border border-slate-800 rounded-2xl p-3 text-center">
+        <div class="text-xs text-slate-400 font-medium">整天總健身次數</div>
+        <div class="text-xl sm:text-2xl font-extrabold text-emerald-400 mt-1"><span id="statTotalReps">0</span> <span class="text-xs font-normal text-slate-400">次</span></div>
+        <div class="text-[11px] text-slate-500 mt-0.5" id="statTotalSets">共 0 組動作</div>
       </div>
-      <div class="bg-slate-900 border border-slate-800 rounded-xl p-2.5 text-center">
-        <div class="text-[11px] text-slate-400">今日重訓總容量</div>
-        <div class="text-lg sm:text-xl font-extrabold text-cyan-400 mt-0.5"><span id="statTotalVol">0</span> <span class="text-xs font-normal text-slate-400">kg</span></div>
-        <div class="text-[10px] text-slate-500">磅數已自動折算kg</div>
+      <div class="bg-slate-900 border border-slate-800 rounded-2xl p-3 text-center">
+        <div class="text-xs text-slate-400 font-medium">今日重訓總容量</div>
+        <div class="text-xl sm:text-2xl font-extrabold text-cyan-400 mt-1"><span id="statTotalVol">0</span> <span class="text-xs font-normal text-slate-400">kg</span></div>
+        <div class="text-[11px] text-slate-500 mt-0.5">磅數自動折算kg</div>
       </div>
-      <div class="bg-slate-900 border border-slate-800 rounded-xl p-2.5 text-center">
-        <div class="text-[11px] text-slate-400">今日有氧總時長</div>
-        <div class="text-lg sm:text-xl font-extrabold text-amber-400 mt-0.5"><span id="statCardioMin">0</span> <span class="text-xs font-normal text-slate-400">分</span></div>
-        <div class="text-[10px] text-slate-500" id="statStreakTotal">累積訓練 1 天</div>
+      <div class="bg-slate-900 border border-slate-800 rounded-2xl p-3 text-center">
+        <div class="text-xs text-slate-400 font-medium">今日有氧總時長</div>
+        <div class="text-xl sm:text-2xl font-extrabold text-amber-400 mt-1"><span id="statCardioMin">0</span> <span class="text-xs font-normal text-slate-400">分</span></div>
+        <div class="text-[11px] text-slate-500 mt-0.5" id="statStreakTotal">累積訓練 1 天</div>
       </div>
     </section>
 
     <!-- 分頁切換：重訓 / 有氧 / 進步曲線圖 -->
-    <div class="grid grid-cols-3 bg-slate-900 p-1 rounded-xl border border-slate-800 text-xs sm:text-sm font-medium">
-      <button id="tabBtnGym" onclick="switchTab('gym')" class="py-2 rounded-lg bg-emerald-600 text-white shadow transition">🏋️ 重訓器材</button>
-      <button id="tabBtnCardio" onclick="switchTab('cardio')" class="py-2 rounded-lg text-slate-400 hover:text-white transition">🏃 有氧運動</button>
-      <button id="tabBtnChart" onclick="switchTab('chart')" class="py-2 rounded-lg text-slate-400 hover:text-white transition">📈 趨勢曲線圖</button>
+    <div class="grid grid-cols-3 bg-slate-900 p-1.5 rounded-2xl border border-slate-800 text-sm font-bold gap-1">
+      <button id="tabBtnGym" onclick="switchTab('gym')" class="py-3 rounded-xl bg-emerald-600 text-white shadow transition">🏋️ 重訓器材</button>
+      <button id="tabBtnCardio" onclick="switchTab('cardio')" class="py-3 rounded-xl text-slate-400 hover:text-white transition">🏃 有氧運動</button>
+      <button id="tabBtnChart" onclick="switchTab('chart')" class="py-3 rounded-xl text-slate-400 hover:text-white transition">📈 趨勢曲線</button>
     </div>
 
     <!-- ================= 1. 重訓器材區塊 ================= -->
     <section id="panelGym" class="space-y-4">
-      <div class="bg-slate-900 border border-slate-800 rounded-2xl p-3.5 space-y-3 shadow-md">
+      <div class="bg-slate-900 border border-slate-800 rounded-2xl p-4 space-y-4 shadow-md">
         <div class="flex items-center justify-between">
-          <h2 class="text-sm font-bold text-emerald-400 flex items-center gap-1.5">1. 選擇或新增重訓器材</h2>
-          <span id="memoryHintBadge" class="hidden text-[11px] bg-cyan-500/15 text-cyan-300 border border-cyan-500/30 px-2 py-0.5 rounded-full">💡 已載入上次記憶</span>
+          <h2 class="text-base font-bold text-emerald-400">1. 選擇或新增重訓器材</h2>
+          <span id="memoryHintBadge" class="hidden text-xs bg-cyan-500/15 text-cyan-300 border border-cyan-500/30 px-2.5 py-1 rounded-full font-semibold">💡 已載入上次記憶</span>
         </div>
 
-        <!-- 常用器材快速按鈕 -->
-        <div id="gymQuickList" class="flex flex-wrap gap-1.5"></div>
+        <div id="gymQuickList" class="flex flex-wrap gap-2"></div>
 
-        <!-- 器材名稱輸入與單位選擇 -->
-        <div class="flex gap-2">
-          <input type="text" id="gymNameInput" placeholder="輸入器材名稱 (如：滑輪下拉、腿推機)" oninput="onExerciseNameInput(this.value)" class="flex-1 bg-slate-950 border border-slate-700 rounded-xl px-3 py-2 text-sm focus:outline-none focus:border-emerald-500">
-          <!-- KG / LB 單位切換 -->
-          <div class="flex bg-slate-950 border border-slate-700 rounded-xl p-0.5">
-            <button type="button" id="unitBtnKg" onclick="setWeightUnit('kg')" class="px-2.5 py-1.5 rounded-lg text-xs font-bold bg-emerald-600 text-white transition">kg 公斤</button>
-            <button type="button" id="unitBtnLb" onclick="setWeightUnit('lb')" class="px-2.5 py-1.5 rounded-lg text-xs font-bold text-slate-400 hover:text-white transition">lb 磅</button>
+        <div class="flex flex-col sm:flex-row gap-2.5">
+          <input type="text" id="gymNameInput" placeholder="輸入器材名稱 (如：滑輪下拉、腿推機)" oninput="onExerciseNameInput(this.value)" class="flex-1 bg-slate-950 border border-slate-700 rounded-xl px-3.5 py-3 text-base font-medium focus:outline-none focus:border-emerald-500">
+          <div class="grid grid-cols-2 bg-slate-950 border border-slate-700 rounded-xl p-1 gap-1 sm:w-48">
+            <button type="button" id="unitBtnKg" onclick="setWeightUnit('kg')" class="py-2.5 rounded-lg text-sm font-bold bg-emerald-600 text-white transition">kg 公斤</button>
+            <button type="button" id="unitBtnLb" onclick="setWeightUnit('lb')" class="py-2.5 rounded-lg text-sm font-bold text-slate-400 hover:text-white transition">lb 磅</button>
           </div>
         </div>
 
-        <!-- 上次記憶提示盒 -->
-        <div id="lastMemoryBox" class="hidden bg-slate-950/90 border border-slate-800 rounded-xl p-2.5 text-xs space-y-1">
+        <div id="lastMemoryBox" class="hidden bg-slate-950/90 border border-slate-800 rounded-xl p-3 text-xs sm:text-sm space-y-1.5">
           <div class="flex items-center justify-between text-slate-400">
-            <span>📌 上次該器材紀錄 (<span id="memDate"></span>)：</span>
+            <span>📌 上次紀錄 (<span id="memDate"></span>)：</span>
             <span id="overloadBadge" class="font-bold text-amber-400"></span>
           </div>
-          <div id="memDetail" class="text-slate-200 font-medium"></div>
+          <div id="memDetail" class="text-slate-200 font-medium leading-relaxed"></div>
         </div>
 
         <!-- 2. 逐組獨立調整區 -->
-        <div class="pt-2 border-t border-slate-800 space-y-2.5">
-          <div class="flex items-center justify-between flex-wrap gap-1">
-            <div class="flex items-center gap-2">
-              <span class="text-sm font-bold text-emerald-400">2. 逐組重量與次數</span>
-              <label class="flex items-center gap-1 text-[11px] text-slate-400 cursor-pointer">
-                <input type="checkbox" id="autoTimerCheck" checked class="accent-emerald-500 rounded"> 勾選完成自動計時
+        <div class="pt-3 border-t border-slate-800 space-y-3">
+          <div class="flex items-center justify-between flex-wrap gap-2">
+            <div class="flex items-center gap-2.5">
+              <span class="text-base font-bold text-emerald-400">2. 逐組重量與次數</span>
+              <label class="flex items-center gap-1.5 text-xs text-slate-300 cursor-pointer bg-slate-950 px-2.5 py-1.5 rounded-lg border border-slate-800">
+                <input type="checkbox" id="autoTimerCheck" checked class="w-4 h-4 accent-emerald-500 rounded"> 勾選自動計時
               </label>
             </div>
-            <div class="flex gap-1">
-              <button type="button" onclick="batchAdjustWeight(-2.5)" class="text-[11px] bg-slate-800 hover:bg-slate-700 px-2 py-1 rounded border border-slate-700">-2.5</button>
-              <button type="button" onclick="batchAdjustWeight(2.5)" class="text-[11px] bg-slate-800 hover:bg-slate-700 px-2 py-1 rounded border border-slate-700">+2.5</button>
-              <button type="button" onclick="batchAdjustReps(1)" class="text-[11px] bg-slate-800 hover:bg-slate-700 px-2 py-1 rounded border border-slate-700">全+1下</button>
+            <div class="flex gap-1.5 w-full sm:w-auto justify-end">
+              <button type="button" onclick="batchAdjustWeight(-2.5)" class="flex-1 sm:flex-initial text-xs font-bold bg-slate-800 active:bg-slate-700 px-3 py-2.5 rounded-xl border border-slate-700">全組 -2.5</button>
+              <button type="button" onclick="batchAdjustWeight(2.5)" class="flex-1 sm:flex-initial text-xs font-bold bg-slate-800 active:bg-slate-700 px-3 py-2.5 rounded-xl border border-slate-700">全組 +2.5</button>
+              <button type="button" onclick="batchAdjustReps(1)" class="flex-1 sm:flex-initial text-xs font-bold bg-slate-800 active:bg-slate-700 px-3 py-2.5 rounded-xl border border-slate-700">全組 +1下</button>
             </div>
           </div>
 
-          <!-- 逐組列表容器 -->
-          <div id="setsContainer" class="space-y-2"></div>
+          <div id="setsContainer" class="space-y-3"></div>
 
-          <div class="flex gap-2 pt-1">
-            <button type="button" onclick="addSetRow()" class="flex-1 py-2 rounded-xl border border-dashed border-slate-700 hover:border-emerald-500 text-xs text-slate-300 hover:text-emerald-400 font-medium transition">＋ 新增一組 (複製上一組)</button>
+          <div class="pt-1">
+            <button type="button" onclick="addSetRow()" class="w-full py-3.5 rounded-2xl border-2 border-dashed border-slate-700 active:border-emerald-500 text-sm text-slate-200 hover:text-emerald-400 font-bold transition bg-slate-950/50">＋ 新增一組 (複製上一組)</button>
           </div>
         </div>
 
-        <!-- 備註與儲存 -->
-        <div class="pt-2 border-t border-slate-800 flex gap-2">
-          <input type="text" id="gymNoteInput" placeholder="備註 (選填，如：頂峰停頓1秒、最後一組力竭)" class="flex-1 bg-slate-950 border border-slate-700 rounded-xl px-3 py-2 text-xs focus:outline-none focus:border-emerald-500">
-          <button type="button" onclick="saveGymLog()" class="bg-emerald-600 hover:bg-emerald-500 text-white font-bold px-4 py-2 rounded-xl text-sm shadow-lg transition">＋ 儲存紀錄</button>
+        <div class="pt-3 border-t border-slate-800 flex flex-col sm:flex-row gap-2.5">
+          <input type="text" id="gymNoteInput" placeholder="備註 (選填，如：頂峰停頓1秒、最後一組力竭)" class="flex-1 bg-slate-950 border border-slate-700 rounded-xl px-3.5 py-3 text-sm focus:outline-none focus:border-emerald-500">
+          <button type="button" onclick="saveGymLog()" class="bg-emerald-600 active:bg-emerald-500 text-white font-extrabold px-6 py-3.5 rounded-xl text-base shadow-lg transition">＋ 儲存本項紀錄</button>
         </div>
       </div>
 
-      <!-- 當日重訓紀錄清單 -->
-      <div class="space-y-2">
-        <h3 class="text-xs font-bold text-slate-400 uppercase tracking-wider px-1">📋 今日已登錄重訓項目</h3>
-        <div id="todayGymList" class="space-y-2"></div>
+      <div class="space-y-2.5">
+        <h3 class="text-sm font-bold text-slate-400 px-1">📋 今日已登錄重訓項目</h3>
+        <div id="todayGymList" class="space-y-2.5"></div>
       </div>
     </section>
 
     <!-- ================= 2. 有氧運動區塊 ================= -->
     <section id="panelCardio" class="hidden space-y-4">
-      <div class="bg-slate-900 border border-slate-800 rounded-2xl p-3.5 space-y-3 shadow-md">
+      <div class="bg-slate-900 border border-slate-800 rounded-2xl p-4 space-y-4 shadow-md">
         <div class="flex items-center justify-between">
-          <h2 class="text-sm font-bold text-amber-400">🏃 新增有氧運動紀錄</h2>
-          <span id="cardioMemBadge" class="hidden text-[11px] bg-amber-500/15 text-amber-300 border border-amber-500/30 px-2 py-0.5 rounded-full">💡 已帶入上次設定</span>
+          <h2 class="text-base font-bold text-amber-400">🏃 新增有氧運動紀錄</h2>
+          <span id="cardioMemBadge" class="hidden text-xs bg-amber-500/15 text-amber-300 border border-amber-500/30 px-2.5 py-1 rounded-full font-semibold">💡 已帶入上次設定</span>
         </div>
 
-        <div id="cardioQuickList" class="flex flex-wrap gap-1.5"></div>
+        <div id="cardioQuickList" class="flex flex-wrap gap-2"></div>
 
-        <input type="text" id="cardioNameInput" placeholder="有氧器材名稱 (如：跑步機、爬梯機、飛輪)" oninput="onCardioNameInput(this.value)" class="w-full bg-slate-950 border border-slate-700 rounded-xl px-3 py-2 text-sm focus:outline-none focus:border-amber-500">
+        <input type="text" id="cardioNameInput" placeholder="有氧器材名稱 (如：跑步機、爬梯機、飛輪)" oninput="onCardioNameInput(this.value)" class="w-full bg-slate-950 border border-slate-700 rounded-xl px-3.5 py-3 text-base font-medium focus:outline-none focus:border-amber-500">
 
-        <div class="grid grid-cols-3 gap-2">
-          <div class="bg-slate-950 border border-slate-800 rounded-xl p-2 text-center">
-            <label class="text-[11px] text-slate-400 block">坡度 Incline (%)</label>
-            <div class="flex items-center justify-center gap-1 mt-1">
-              <button onclick="adjCardio('cardioIncline', -0.5)" class="w-6 h-6 rounded bg-slate-800 text-xs">-</button>
-              <input type="number" step="0.5" id="cardioIncline" value="10" class="w-12 bg-transparent text-center font-bold text-sm focus:outline-none">
-              <button onclick="adjCardio('cardioIncline', 0.5)" class="w-6 h-6 rounded bg-slate-800 text-xs">+</button>
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+          <div class="bg-slate-950 border border-slate-800 rounded-2xl p-3 flex sm:flex-col items-center justify-between">
+            <label class="text-sm font-bold text-slate-300">坡度 Incline (%)</label>
+            <div class="flex items-center gap-2 sm:mt-2">
+              <button onclick="adjCardio('cardioIncline', -0.5)" class="touch-btn rounded-xl bg-slate-800 active:bg-slate-700 text-lg font-bold border border-slate-700">－</button>
+              <input type="number" step="0.5" id="cardioIncline" value="10" class="w-16 bg-transparent text-center font-extrabold text-xl text-amber-400 focus:outline-none">
+              <button onclick="adjCardio('cardioIncline', 0.5)" class="touch-btn rounded-xl bg-slate-800 active:bg-slate-700 text-lg font-bold border border-slate-700">＋</button>
             </div>
           </div>
-          <div class="bg-slate-950 border border-slate-800 rounded-xl p-2 text-center">
-            <label class="text-[11px] text-slate-400 block">速度 Speed</label>
-            <div class="flex items-center justify-center gap-1 mt-1">
-              <button onclick="adjCardio('cardioSpeed', -0.5)" class="w-6 h-6 rounded bg-slate-800 text-xs">-</button>
-              <input type="number" step="0.1" id="cardioSpeed" value="5.5" class="w-12 bg-transparent text-center font-bold text-sm focus:outline-none">
-              <button onclick="adjCardio('cardioSpeed', 0.5)" class="w-6 h-6 rounded bg-slate-800 text-xs">+</button>
+
+          <div class="bg-slate-950 border border-slate-800 rounded-2xl p-3 flex sm:flex-col items-center justify-between">
+            <label class="text-sm font-bold text-slate-300">速度 Speed</label>
+            <div class="flex items-center gap-2 sm:mt-2">
+              <button onclick="adjCardio('cardioSpeed', -0.5)" class="touch-btn rounded-xl bg-slate-800 active:bg-slate-700 text-lg font-bold border border-slate-700">－</button>
+              <input type="number" step="0.1" id="cardioSpeed" value="5.5" class="w-16 bg-transparent text-center font-extrabold text-xl text-cyan-400 focus:outline-none">
+              <button onclick="adjCardio('cardioSpeed', 0.5)" class="touch-btn rounded-xl bg-slate-800 active:bg-slate-700 text-lg font-bold border border-slate-700">＋</button>
             </div>
           </div>
-          <div class="bg-slate-950 border border-slate-800 rounded-xl p-2 text-center">
-            <label class="text-[11px] text-slate-400 block">時長 (分鐘)</label>
-            <div class="flex items-center justify-center gap-1 mt-1">
-              <button onclick="adjCardio('cardioDuration', -5)" class="w-6 h-6 rounded bg-slate-800 text-xs">-</button>
-              <input type="number" step="1" id="cardioDuration" value="15" class="w-12 bg-transparent text-center font-bold text-sm focus:outline-none">
-              <button onclick="adjCardio('cardioDuration', 5)" class="w-6 h-6 rounded bg-slate-800 text-xs">+</button>
+
+          <div class="bg-slate-950 border border-slate-800 rounded-2xl p-3 flex sm:flex-col items-center justify-between">
+            <label class="text-sm font-bold text-slate-300">時長 (分鐘)</label>
+            <div class="flex items-center gap-2 sm:mt-2">
+              <button onclick="adjCardio('cardioDuration', -5)" class="touch-btn rounded-xl bg-slate-800 active:bg-slate-700 text-lg font-bold border border-slate-700">－</button>
+              <input type="number" step="1" id="cardioDuration" value="15" class="w-16 bg-transparent text-center font-extrabold text-xl text-emerald-400 focus:outline-none">
+              <button onclick="adjCardio('cardioDuration', 5)" class="touch-btn rounded-xl bg-slate-800 active:bg-slate-700 text-lg font-bold border border-slate-700">＋</button>
             </div>
           </div>
         </div>
 
-        <div class="flex gap-2 pt-1">
-          <input type="text" id="cardioNoteInput" placeholder="有氧備註 (如：消耗 330 kcal、Zone 2 快走)" class="flex-1 bg-slate-950 border border-slate-700 rounded-xl px-3 py-2 text-xs focus:outline-none focus:border-amber-500">
-          <button onclick="saveCardioLog()" class="bg-amber-600 hover:bg-amber-500 text-white font-bold px-4 py-2 rounded-xl text-sm shadow-lg transition">＋ 儲存有氧</button>
+        <div class="flex flex-col sm:flex-row gap-2.5 pt-1">
+          <input type="text" id="cardioNoteInput" placeholder="有氧備註 (如：消耗 330 kcal、Zone 2 快走)" class="flex-1 bg-slate-950 border border-slate-700 rounded-xl px-3.5 py-3 text-sm focus:outline-none focus:border-amber-500">
+          <button onclick="saveCardioLog()" class="bg-amber-600 active:bg-amber-500 text-white font-extrabold px-6 py-3.5 rounded-xl text-base shadow-lg transition">＋ 儲存有氧紀錄</button>
         </div>
       </div>
 
-      <div class="space-y-2">
-        <h3 class="text-xs font-bold text-slate-400 uppercase tracking-wider px-1">📋 今日已登錄有氧項目</h3>
-        <div id="todayCardioList" class="space-y-2"></div>
+      <div class="space-y-2.5">
+        <h3 class="text-sm font-bold text-slate-400 px-1">📋 今日已登錄有氧項目</h3>
+        <div id="todayCardioList" class="space-y-2.5"></div>
       </div>
     </section>
 
     <!-- ================= 3. 趨勢曲線圖區塊 ================= -->
     <section id="panelChart" class="hidden space-y-4">
-      <div class="bg-slate-900 border border-slate-800 rounded-2xl p-4 space-y-3 shadow-md">
-        <div class="flex flex-wrap items-center justify-between gap-2">
-          <h2 class="text-sm font-bold text-cyan-400">📈 訓練數據進步曲線圖</h2>
-          <div class="flex bg-slate-950 border border-slate-800 rounded-lg p-0.5 text-xs">
-            <button id="chartModeDaily" onclick="setChartMode('daily')" class="px-2.5 py-1 rounded-md bg-cyan-600 text-white font-medium">每日總容量/次數</button>
-            <button id="chartModeEx" onclick="setChartMode('exercise')" class="px-2.5 py-1 rounded-md text-slate-400 hover:text-white">單一器材重量突破</button>
+      <div class="bg-slate-900 border border-slate-800 rounded-2xl p-4 space-y-4 shadow-md">
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5">
+          <h2 class="text-base font-bold text-cyan-400">📈 訓練數據進步曲線圖</h2>
+          <div class="grid grid-cols-2 bg-slate-950 border border-slate-800 rounded-xl p-1 text-xs sm:text-sm gap-1">
+            <button id="chartModeDaily" onclick="setChartMode('daily')" class="px-3 py-2 rounded-lg bg-cyan-600 text-white font-bold">每日總容量/次數</button>
+            <button id="chartModeEx" onclick="setChartMode('exercise')" class="px-3 py-2 rounded-lg text-slate-400 hover:text-white font-bold">單一器材突破</button>
           </div>
         </div>
 
-        <!-- 單一器材選擇器 -->
         <div id="chartExerciseSelectorBox" class="hidden flex items-center gap-2">
-          <span class="text-xs text-slate-400">選擇器材：</span>
-          <select id="chartExerciseSelect" onchange="renderProgressChart()" class="flex-1 bg-slate-950 border border-slate-700 rounded-xl px-3 py-1.5 text-xs text-slate-200 focus:outline-none focus:border-cyan-500"></select>
+          <span class="text-sm text-slate-400 font-medium">選擇器材：</span>
+          <select id="chartExerciseSelect" onchange="renderProgressChart()" class="flex-1 bg-slate-950 border border-slate-700 rounded-xl px-3.5 py-2.5 text-sm text-slate-200 font-bold focus:outline-none focus:border-cyan-500"></select>
         </div>
 
-        <!-- SVG 曲線圖畫布容器 -->
-        <div class="bg-slate-950 border border-slate-800/80 rounded-xl p-3">
-          <div id="chartTitle" class="text-xs text-slate-400 mb-2 font-medium">近期訓練日總容量趨勢 (kg)</div>
-          <div id="svgChartContainer" class="w-full h-52 flex items-center justify-center"></div>
+        <div class="bg-slate-950 border border-slate-800/80 rounded-2xl p-3.5">
+          <div id="chartTitle" class="text-xs sm:text-sm text-slate-400 mb-2 font-semibold">近期訓練日總容量趨勢 (kg)</div>
+          <div id="svgChartContainer" class="w-full h-56 flex items-center justify-center"></div>
         </div>
 
-        <!-- 歷史紀錄摘要列表 -->
-        <div class="space-y-1.5 pt-2 border-t border-slate-800">
-          <div class="text-xs font-bold text-slate-400">📅 歷史訓練日快速跳轉</div>
-          <div id="historyDateChips" class="flex flex-wrap gap-1.5"></div>
+        <div class="space-y-2 pt-2 border-t border-slate-800">
+          <div class="text-xs sm:text-sm font-bold text-slate-400">📅 點擊歷史訓練日快速跳轉</div>
+          <div id="historyDateChips" class="flex flex-wrap gap-2"></div>
         </div>
       </div>
     </section>
 
   </main>
 
+  <!-- 🔔 碼表結束：全螢幕強效提醒彈跳視窗 -->
+  <div id="timerAlertModal" class="fixed inset-0 z-50 hidden bg-black/80 backdrop-blur-md flex items-center justify-center p-4">
+    <div class="alert-pop bg-slate-900 border-2 border-emerald-500 rounded-3xl max-w-sm w-full p-6 text-center space-y-4 shadow-[0_0_40px_rgba(16,185,129,0.4)]">
+      <div class="text-5xl">⏰</div>
+      <h3 class="text-2xl font-extrabold text-emerald-400">組間休息結束！</h3>
+      <p id="timerAlertSubText" class="text-sm text-slate-300 font-medium">磷酸肌酸已恢復，準備上槓開始下一組吧！💪</p>
+      <div class="grid grid-cols-2 gap-3 pt-2">
+        <button onclick="addExtraRestAndClose(30)" class="py-3.5 rounded-2xl bg-slate-800 active:bg-slate-700 text-cyan-300 font-bold text-sm border border-slate-700">
+          ＋ 再休 30 秒
+        </button>
+        <button onclick="dismissTimerAlert()" class="py-3.5 rounded-2xl bg-emerald-600 active:bg-emerald-500 text-white font-extrabold text-base shadow-lg">
+          🔥 開始下一組
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 🔥 連勝成就設定與保護 Modal -->
+  <div id="streakModal" class="fixed inset-0 z-50 hidden bg-black/75 backdrop-blur-sm flex items-center justify-center p-4">
+    <div class="bg-slate-900 border border-slate-700 rounded-2xl max-w-sm w-full p-5 space-y-4 shadow-2xl">
+      <div class="flex items-center justify-between">
+        <h3 class="font-bold text-lg text-amber-400">🔥 連勝天數成就設定</h3>
+        <button onclick="closeStreakModal()" class="w-9 h-9 rounded-lg bg-slate-800 text-slate-300 hover:text-white text-lg">✕</button>
+      </div>
+      <p class="text-xs sm:text-sm text-slate-300 leading-relaxed">
+        系統會自動累計您的連續訓練天數，且跨日未輸入前不會歸零！若您之前已有累積天數或遇休息日想保留連勝成就，可在此直接調整保底連勝天數：
+      </p>
+      <div class="bg-slate-950 border border-slate-800 rounded-2xl p-4 flex items-center justify-between">
+        <button onclick="adjManualStreak(-1)" class="touch-btn rounded-xl bg-slate-800 active:bg-slate-700 text-xl font-bold border border-slate-700">－</button>
+        <div class="text-center">
+          <div class="text-xs text-slate-400">目前保底連勝天數</div>
+          <div class="text-3xl font-extrabold text-amber-400 mt-0.5"><span id="manualStreakVal">1</span> <span class="text-sm font-normal">天</span></div>
+        </div>
+        <button onclick="adjManualStreak(1)" class="touch-btn rounded-xl bg-slate-800 active:bg-slate-700 text-xl font-bold border border-slate-700">＋</button>
+      </div>
+      <button onclick="saveManualStreak()" class="w-full py-3.5 rounded-xl bg-amber-600 active:bg-amber-500 text-white font-extrabold text-base shadow-lg">
+        ✅ 儲存連勝紀錄
+      </button>
+    </div>
+  </div>
+
   <!-- 備份與還原 Modal -->
   <div id="backupModal" class="fixed inset-0 z-50 hidden bg-black/75 backdrop-blur-sm flex items-center justify-center p-4">
-    <div class="bg-slate-900 border border-slate-700 rounded-2xl max-w-md w-full p-4 space-y-3 shadow-2xl">
+    <div class="bg-slate-900 border border-slate-700 rounded-2xl max-w-md w-full p-5 space-y-4 shadow-2xl">
       <div class="flex items-center justify-between">
-        <h3 class="font-bold text-base text-emerald-400">💾 資料備份與還原</h3>
-        <button onclick="closeBackupModal()" class="text-slate-400 hover:text-white text-lg">✕</button>
+        <h3 class="font-bold text-lg text-emerald-400">💾 資料備份與還原</h3>
+        <button onclick="closeBackupModal()" class="w-9 h-9 rounded-lg bg-slate-800 text-slate-300 hover:text-white text-lg">✕</button>
       </div>
-      <p class="text-xs text-slate-400 leading-relaxed">
-        您的健身紀錄會自動保存在手機瀏覽器中。若要更換手機或雙重保險，可下載備份檔或貼上備份代碼還原。
+      <p class="text-xs sm:text-sm text-slate-400 leading-relaxed">
+        您的健身紀錄會自動保存在手機瀏覽器中。若要更換手機或雙重保險，可下載備份檔或讀取備份檔還原。
       </p>
-      <div class="flex gap-2">
-        <button onclick="downloadBackupFile()" class="flex-1 bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold py-2.5 rounded-xl">⬇️ 下載 JSON 備份檔</button>
-        <label class="flex-1 bg-cyan-600 hover:bg-cyan-500 text-white text-xs font-bold py-2.5 rounded-xl text-center cursor-pointer">
+      <div class="flex flex-col sm:flex-row gap-2.5">
+        <button onclick="downloadBackupFile()" class="flex-1 bg-emerald-600 active:bg-emerald-500 text-white text-sm font-bold py-3.5 rounded-xl">⬇️ 下載 JSON 備份檔</button>
+        <label class="flex-1 bg-cyan-600 active:bg-cyan-500 text-white text-sm font-bold py-3.5 rounded-xl text-center cursor-pointer">
           ⬆️ 讀取備份檔還原
           <input type="file" accept=".json" onchange="uploadBackupFile(event)" class="hidden">
         </label>
@@ -275,21 +327,22 @@
   </div>
 
   <!-- Toast 通知 -->
-  <div id="toast" class="fixed bottom-5 left-1/2 -translate-x-1/2 z-50 hidden bg-emerald-600 text-white text-xs font-bold px-4 py-2.5 rounded-full shadow-xl"></div>
+  <div id="toast" class="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 hidden bg-emerald-600 text-white text-sm font-bold px-5 py-3 rounded-full shadow-2xl"></div>
 
   <script>
     // ================== 常數與向下相容儲存鍵值 ==================
     const STORAGE_KEY_LOGS = 'pro_gym_notebook_logs_v2';
     const STORAGE_KEY_MEM_GYM = 'pro_gym_notebook_mem_gym_v2';
     const STORAGE_KEY_MEM_CARDIO = 'pro_gym_notebook_mem_cardio_v2';
+    const STORAGE_KEY_STREAK_BOOST = 'pro_gym_notebook_streak_boost_v2';
     const LB_TO_KG = 0.45359237;
 
     let currentDate = '';
-    let currentUnit = 'kg'; // 'kg' | 'lb'
+    let currentUnit = 'kg';
     let currentSets = [];
-    let chartMode = 'daily'; // 'daily' | 'exercise'
+    let chartMode = 'daily';
+    let manualStreakFloor = 0; // 使用者自訂保底連勝天數
 
-    // 預設種子資料 (若手機已有紀錄則直接讀取舊紀錄並保留)
     const SEED_LOGS = {
       "2026-10-30": {
         gym: [
@@ -334,14 +387,20 @@
     let gymMemory = {};
     let cardioMemory = {};
 
-    // ================== 初始化與資料讀取 ==================
     function initApp() {
       const savedLogs = localStorage.getItem(STORAGE_KEY_LOGS);
       const savedGymMem = localStorage.getItem(STORAGE_KEY_MEM_GYM);
       const savedCardioMem = localStorage.getItem(STORAGE_KEY_MEM_CARDIO);
+      const savedStreakBoost = localStorage.getItem(STORAGE_KEY_STREAK_BOOST);
 
       if (savedLogs) {
-        try { allLogs = JSON.parse(savedLogs); } catch(e) { allLogs = SEED_LOGS; }
+        try {
+          allLogs = JSON.parse(savedLogs);
+          // 補齊預設種子天數（若原本沒存到週四有氧則自動補上，不覆蓋已存在日期）
+          Object.keys(SEED_LOGS).forEach(k => {
+            if (!allLogs[k]) allLogs[k] = SEED_LOGS[k];
+          });
+        } catch(e) { allLogs = SEED_LOGS; }
       } else {
         allLogs = SEED_LOGS;
       }
@@ -352,10 +411,12 @@
       if (savedCardioMem) {
         try { cardioMemory = JSON.parse(savedCardioMem); } catch(e) { cardioMemory = {}; }
       }
+      if (savedStreakBoost) {
+        manualStreakFloor = parseInt(savedStreakBoost, 10) || 0;
+      }
 
       rebuildMemoriesFromLogs();
 
-      // 預設日期設為今天 (若處於 2026-11-05 附近則自動對應)
       const now = new Date();
       const yyyy = now.getFullYear();
       const mm = String(now.getMonth() + 1).padStart(2, '0');
@@ -401,25 +462,24 @@
       localStorage.setItem(STORAGE_KEY_LOGS, JSON.stringify(allLogs));
       localStorage.setItem(STORAGE_KEY_MEM_GYM, JSON.stringify(gymMemory));
       localStorage.setItem(STORAGE_KEY_MEM_CARDIO, JSON.stringify(cardioMemory));
+      localStorage.setItem(STORAGE_KEY_STREAK_BOOST, String(manualStreakFloor));
     }
 
-    // ================== 單位切換 (kg / lb) ==================
     function setWeightUnit(unit) {
       currentUnit = (unit === 'lb') ? 'lb' : 'kg';
       const btnKg = document.getElementById('unitBtnKg');
       const btnLb = document.getElementById('unitBtnLb');
       if (currentUnit === 'kg') {
-        btnKg.className = 'px-2.5 py-1.5 rounded-lg text-xs font-bold bg-emerald-600 text-white transition';
-        btnLb.className = 'px-2.5 py-1.5 rounded-lg text-xs font-bold text-slate-400 hover:text-white transition';
+        btnKg.className = 'py-2.5 rounded-lg text-sm font-bold bg-emerald-600 text-white transition';
+        btnLb.className = 'py-2.5 rounded-lg text-sm font-bold text-slate-400 hover:text-white transition';
       } else {
-        btnLb.className = 'px-2.5 py-1.5 rounded-lg text-xs font-bold bg-amber-600 text-white transition';
-        btnKg.className = 'px-2.5 py-1.5 rounded-lg text-xs font-bold text-slate-400 hover:text-white transition';
+        btnLb.className = 'py-2.5 rounded-lg text-sm font-bold bg-amber-600 text-white transition';
+        btnKg.className = 'py-2.5 rounded-lg text-sm font-bold text-slate-400 hover:text-white transition';
       }
       renderSetsEditor();
       updateMemoryComparison();
     }
 
-    // ================== 器材選擇與逐組編輯 ==================
     function resetSetsToDefault() {
       currentSets = [
         { weight: 20, reps: 12, exhausted: false, done: false },
@@ -470,7 +530,6 @@
       const setsSummary = mem.sets.map((s, idx) => `第${idx+1}組 ${s.weight}${u}×${s.reps}下${s.exhausted ? '(🔥力竭)' : ''}`).join('、');
       document.getElementById('memDetail').textContent = setsSummary;
 
-      // 比較目前設定與上次記憶的容量
       const lastVol = mem.sets.reduce((acc, s) => acc + (s.weight * s.reps), 0);
       const curVol = currentSets.reduce((acc, s) => acc + (s.weight * s.reps), 0);
       const maxLastW = Math.max(...mem.sets.map(s => s.weight));
@@ -480,7 +539,7 @@
       if (maxCurW > maxLastW) {
         overloadEl.textContent = `🔥 重量突破 (+${(maxCurW - maxLastW).toFixed(1)} ${currentUnit})`;
       } else if (curVol > lastVol) {
-        overloadEl.textContent = `📈 訓練容量提升 (+${Math.round(curVol - lastVol)} ${currentUnit})`;
+        overloadEl.textContent = `📈 容量提升 (+${Math.round(curVol - lastVol)} ${currentUnit})`;
       } else {
         overloadEl.textContent = `⚡ 維持上次基準`;
       }
@@ -489,31 +548,40 @@
     function renderSetsEditor() {
       const container = document.getElementById('setsContainer');
       container.innerHTML = currentSets.map((s, i) => `
-        <div class="flex items-center justify-between gap-1.5 bg-slate-950 border ${s.done ? 'border-emerald-500/60 bg-emerald-950/15' : 'border-slate-800'} rounded-xl px-2.5 py-2 transition">
-          <button type="button" onclick="toggleSetDone(${i})" class="px-2 py-1 rounded-lg text-xs font-bold ${s.done ? 'bg-emerald-600 text-white' : 'bg-slate-800 text-slate-400'}">
-            ${s.done ? '✓' : ''} 第${i+1}組
-          </button>
+        <div class="bg-slate-950 border-2 ${s.done ? 'border-emerald-500/70 bg-emerald-950/15' : 'border-slate-800'} rounded-2xl p-3 space-y-2.5 transition">
+          <div class="flex items-center justify-between gap-2">
+            <button type="button" onclick="toggleSetDone(${i})" class="flex-1 py-2.5 px-3 rounded-xl text-sm font-extrabold flex items-center justify-center gap-1.5 transition ${s.done ? 'bg-emerald-600 text-white shadow' : 'bg-slate-800 text-slate-300 border border-slate-700'}">
+              <span>${s.done ? '✓ 已完成' : '○ 點擊完成'}</span>
+              <span>第 ${i+1} 組</span>
+            </button>
 
-          <!-- 重量微調 -->
-          <div class="flex items-center gap-1">
-            <button type="button" onclick="adjSetWeight(${i}, -2.5)" class="w-6 h-6 rounded bg-slate-800 hover:bg-slate-700 text-xs font-bold">-</button>
-            <input type="number" step="0.5" value="${s.weight}" onchange="setExactWeight(${i}, this.value)" class="w-12 bg-transparent text-center font-bold text-sm focus:outline-none">
-            <span class="text-[11px] font-bold ${currentUnit === 'lb' ? 'text-amber-400' : 'text-emerald-400'}">${currentUnit}</span>
-            <button type="button" onclick="adjSetWeight(${i}, 2.5)" class="w-6 h-6 rounded bg-slate-800 hover:bg-slate-700 text-xs font-bold">+</button>
+            <button type="button" onclick="toggleSetExhausted(${i})" class="py-2.5 px-3.5 rounded-xl text-sm font-bold border transition ${s.exhausted ? 'bg-rose-600/25 border-rose-500 text-rose-300' : 'bg-slate-900 border-slate-800 text-slate-400'}">
+              🔥 力竭
+            </button>
+
+            ${currentSets.length > 1 ? `
+              <button type="button" onclick="removeSetRow(${i})" class="w-11 h-11 flex items-center justify-center rounded-xl bg-slate-900 border border-slate-800 text-slate-500 active:text-rose-400 text-base font-bold">✕</button>
+            ` : ''}
           </div>
 
-          <!-- 次數微調 -->
-          <div class="flex items-center gap-1">
-            <button type="button" onclick="adjSetReps(${i}, -1)" class="w-6 h-6 rounded bg-slate-800 hover:bg-slate-700 text-xs font-bold">-</button>
-            <input type="number" step="1" value="${s.reps}" onchange="setExactReps(${i}, this.value)" class="w-9 bg-transparent text-center font-bold text-sm focus:outline-none">
-            <span class="text-[11px] text-slate-400">下</span>
-            <button type="button" onclick="adjSetReps(${i}, 1)" class="w-6 h-6 rounded bg-slate-800 hover:bg-slate-700 text-xs font-bold">+</button>
-          </div>
+          <div class="grid grid-cols-2 gap-2.5">
+            <div class="bg-slate-900/90 border border-slate-800 rounded-xl p-1.5 flex items-center justify-between">
+              <button type="button" onclick="adjSetWeight(${i}, -2.5)" class="touch-btn rounded-xl bg-slate-800 active:bg-slate-700 text-lg font-extrabold text-slate-200 border border-slate-700">－</button>
+              <div class="flex flex-col items-center">
+                <input type="number" step="0.5" value="${s.weight}" onchange="setExactWeight(${i}, this.value)" class="w-16 bg-transparent text-center font-extrabold text-lg text-white focus:outline-none">
+                <span class="text-[11px] font-bold ${currentUnit === 'lb' ? 'text-amber-400' : 'text-emerald-400'}">${currentUnit}</span>
+              </div>
+              <button type="button" onclick="adjSetWeight(${i}, 2.5)" class="touch-btn rounded-xl bg-slate-800 active:bg-slate-700 text-lg font-extrabold text-slate-200 border border-slate-700">＋</button>
+            </div>
 
-          <!-- 力竭與刪除 -->
-          <div class="flex items-center gap-1">
-            <button type="button" onclick="toggleSetExhausted(${i})" class="px-2 py-1 rounded-lg text-[11px] font-bold border transition ${s.exhausted ? 'bg-rose-600/20 border-rose-500 text-rose-300' : 'bg-slate-900 border-slate-800 text-slate-500'}">🔥力竭</button>
-            ${currentSets.length > 1 ? `<button type="button" onclick="removeSetRow(${i})" class="text-slate-500 hover:text-rose-400 px-1 text-xs">✕</button>` : ''}
+            <div class="bg-slate-900/90 border border-slate-800 rounded-xl p-1.5 flex items-center justify-between">
+              <button type="button" onclick="adjSetReps(${i}, -1)" class="touch-btn rounded-xl bg-slate-800 active:bg-slate-700 text-lg font-extrabold text-slate-200 border border-slate-700">－</button>
+              <div class="flex flex-col items-center">
+                <input type="number" step="1" value="${s.reps}" onchange="setExactReps(${i}, this.value)" class="w-14 bg-transparent text-center font-extrabold text-lg text-white focus:outline-none">
+                <span class="text-[11px] font-bold text-cyan-400">次數 (下)</span>
+              </div>
+              <button type="button" onclick="adjSetReps(${i}, 1)" class="touch-btn rounded-xl bg-slate-800 active:bg-slate-700 text-lg font-extrabold text-slate-200 border border-slate-700">＋</button>
+            </div>
           </div>
         </div>
       `).join('');
@@ -620,7 +688,6 @@
       renderAll();
     }
 
-    // ================== 有氧運動邏輯 ==================
     function selectCardioExercise(name) {
       document.getElementById('cardioNameInput').value = name;
       onCardioNameInput(name);
@@ -672,7 +739,6 @@
       renderAll();
     }
 
-    // ================== 畫面渲染與統計 ==================
     function renderAll() {
       updateWeekdayLabel();
       renderQuickButtons();
@@ -694,16 +760,16 @@
 
       document.getElementById('gymQuickList').innerHTML = allGymNames.map(name => {
         const u = gymMemory[name]?.unit || 'kg';
-        return `<button type="button" onclick="selectGymExercise('${name.replace(/'/g, "\\'")}')" class="text-xs px-2.5 py-1 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 transition flex items-center gap-1">
+        return `<button type="button" onclick="selectGymExercise('${name.replace(/'/g, "\\'")}')" class="text-sm px-3.5 py-2.5 rounded-xl bg-slate-800 active:bg-slate-700 text-slate-100 border border-slate-700 font-semibold transition flex items-center gap-1.5">
           <span>${name}</span>
-          <span class="text-[10px] px-1 rounded ${u === 'lb' ? 'bg-amber-500/20 text-amber-300' : 'bg-emerald-500/20 text-emerald-300'}">${u}</span>
+          <span class="text-xs px-1.5 py-0.5 rounded-md font-bold ${u === 'lb' ? 'bg-amber-500/20 text-amber-300' : 'bg-emerald-500/20 text-emerald-300'}">${u}</span>
         </button>`;
       }).join('');
 
       const defaultCardio = ["跑步機 (坡度快走/慢跑)", "爬梯機", "飛輪車", "橢圓機", "籃球實戰"];
       const allCardioNames = Array.from(new Set([...Object.keys(cardioMemory), ...defaultCardio]));
       document.getElementById('cardioQuickList').innerHTML = allCardioNames.map(name =>
-        `<button type="button" onclick="selectCardioExercise('${name.replace(/'/g, "\\'")}')" class="text-xs px-2.5 py-1 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 transition">${name}</button>`
+        `<button type="button" onclick="selectCardioExercise('${name.replace(/'/g, "\\'")}')" class="text-sm px-3.5 py-2.5 rounded-xl bg-slate-800 active:bg-slate-700 text-slate-100 border border-slate-700 font-semibold transition">${name}</button>`
       ).join('');
     }
 
@@ -713,26 +779,26 @@
       const cardioEl = document.getElementById('todayCardioList');
 
       if (!dayData.gym || dayData.gym.length === 0) {
-        gymEl.innerHTML = `<div class="text-xs text-slate-500 bg-slate-900/50 border border-slate-800/60 rounded-xl p-4 text-center">今日尚無重訓紀錄，點選上方器材即可快速帶入記憶開練！</div>`;
+        gymEl.innerHTML = `<div class="text-sm text-slate-500 bg-slate-900/50 border border-slate-800/60 rounded-2xl p-5 text-center">今日尚無重訓紀錄，點選上方器材即可快速帶入記憶開練！</div>`;
       } else {
         gymEl.innerHTML = dayData.gym.map((item, idx) => {
           const u = item.unit || 'kg';
           const totalReps = item.sets.reduce((a, b) => a + Number(b.reps), 0);
           const rawVol = item.sets.reduce((a, b) => a + (Number(b.weight) * Number(b.reps)), 0);
           const setChips = item.sets.map((s, i) =>
-            `<span class="inline-block text-[11px] px-2 py-0.5 rounded bg-slate-950 border ${s.exhausted ? 'border-rose-500/50 text-rose-300' : 'border-slate-800 text-slate-300'}">第${i+1}組 ${s.weight}${u}×${s.reps}下${s.exhausted ? '🔥' : ''}</span>`
+            `<span class="inline-block text-xs px-2.5 py-1 rounded-lg bg-slate-950 border font-medium ${s.exhausted ? 'border-rose-500/50 text-rose-300' : 'border-slate-800 text-slate-300'}">第${i+1}組 ${s.weight}${u}×${s.reps}下${s.exhausted ? '🔥' : ''}</span>`
           ).join(' ');
 
           return `
-            <div class="bg-slate-900 border border-slate-800 rounded-xl p-3 space-y-2">
-              <div class="flex items-center justify-between">
-                <div class="font-bold text-sm text-emerald-400">
+            <div class="bg-slate-900 border border-slate-800 rounded-2xl p-3.5 space-y-2.5">
+              <div class="flex items-center justify-between gap-2">
+                <div class="font-bold text-base text-emerald-400">
                   ${idx+1}. ${item.name}
-                  <span class="text-xs font-normal text-slate-400 ml-1">[共 ${item.sets.length} 組 / ${totalReps} 次 / ${Math.round(rawVol)} ${u}]</span>
+                  <span class="text-xs font-normal text-slate-400 block sm:inline sm:ml-1">[共 ${item.sets.length} 組 / ${totalReps} 次 / ${Math.round(rawVol)} ${u}]</span>
                 </div>
-                <button onclick="deleteGymLog(${item.id})" class="text-xs text-slate-500 hover:text-rose-400">刪除</button>
+                <button onclick="deleteGymLog(${item.id})" class="text-xs px-3 py-1.5 rounded-lg bg-slate-800 text-slate-400 active:text-rose-400 font-bold">刪除</button>
               </div>
-              <div class="flex flex-wrap gap-1">${setChips}</div>
+              <div class="flex flex-wrap gap-1.5">${setChips}</div>
               ${item.note ? `<div class="text-xs text-slate-400">📝 備註：${item.note}</div>` : ''}
             </div>
           `;
@@ -740,19 +806,55 @@
       }
 
       if (!dayData.cardio || dayData.cardio.length === 0) {
-        cardioEl.innerHTML = `<div class="text-xs text-slate-500 bg-slate-900/50 border border-slate-800/60 rounded-xl p-4 text-center">今日尚無有氧紀錄</div>`;
+        cardioEl.innerHTML = `<div class="text-sm text-slate-500 bg-slate-900/50 border border-slate-800/60 rounded-2xl p-5 text-center">今日尚無有氧紀錄</div>`;
       } else {
         cardioEl.innerHTML = dayData.cardio.map((c, idx) => `
-          <div class="bg-slate-900 border border-slate-800 rounded-xl p-3 flex items-center justify-between">
+          <div class="bg-slate-900 border border-slate-800 rounded-2xl p-3.5 flex items-center justify-between gap-2">
             <div class="space-y-1">
-              <div class="font-bold text-sm text-amber-400">${idx+1}. ${c.name}</div>
-              <div class="text-xs text-slate-300">坡度 <span class="font-bold">${c.incline}%</span> ｜ 速度 <span class="font-bold">${c.speed}</span> ｜ 時長 <span class="font-bold text-amber-300">${c.duration} 分鐘</span></div>
+              <div class="font-bold text-base text-amber-400">${idx+1}. ${c.name}</div>
+              <div class="text-xs sm:text-sm text-slate-300">坡度 <span class="font-bold">${c.incline}%</span> ｜ 速度 <span class="font-bold">${c.speed}</span> ｜ 時長 <span class="font-bold text-amber-300">${c.duration} 分鐘</span></div>
               ${c.note ? `<div class="text-xs text-slate-400">📝 ${c.note}</div>` : ''}
             </div>
-            <button onclick="deleteCardioLog(${c.id})" class="text-xs text-slate-500 hover:text-rose-400">刪除</button>
+            <button onclick="deleteCardioLog(${c.id})" class="text-xs px-3 py-1.5 rounded-lg bg-slate-800 text-slate-400 active:text-rose-400 font-bold">刪除</button>
           </div>
         `).join('');
       }
+    }
+
+    // 🔥 升級版連勝天數邏輯：跨日未填寫前自動延續昨天連勝，並支援保底連勝基數
+    function calculateCurrentStreak() {
+      const activeDates = Object.keys(allLogs).filter(d => {
+        const x = allLogs[d];
+        return x && ((x.gym && x.gym.length > 0) || (x.cardio && x.cardio.length > 0));
+      }).sort();
+
+      let autoStreak = 0;
+      let checkDate = new Date(currentDate + 'T00:00:00');
+
+      const formatKey = (dt) => {
+        const y = dt.getFullYear();
+        const m = String(dt.getMonth() + 1).padStart(2, '0');
+        const d = String(dt.getDate()).padStart(2, '0');
+        return `${y}-${m}-${d}`;
+      };
+
+      // 如果今天還沒輸入紀錄，先從「昨天」開始往回算，確保一早打開不會變回 1 天！
+      if (!activeDates.includes(formatKey(checkDate))) {
+        checkDate.setDate(checkDate.getDate() - 1);
+      }
+
+      while (true) {
+        const key = formatKey(checkDate);
+        if (activeDates.includes(key)) {
+          autoStreak++;
+          checkDate.setDate(checkDate.getDate() - 1);
+        } else {
+          break;
+        }
+      }
+
+      const finalStreak = Math.max(1, autoStreak, manualStreakFloor);
+      return { finalStreak, totalActiveDays: Math.max(activeDates.length, finalStreak) };
     }
 
     function updateStatsAndStreak() {
@@ -777,32 +879,35 @@
       document.getElementById('statTotalVol').textContent = Math.round(totalVolKg).toLocaleString();
       document.getElementById('statCardioMin').textContent = cardioMin;
 
-      // 計算活躍訓練天數與連續天數
-      const activeDates = Object.keys(allLogs).filter(d => {
-        const x = allLogs[d];
-        return x && ((x.gym && x.gym.length > 0) || (x.cardio && x.cardio.length > 0));
-      }).sort();
-
-      let streak = 0;
-      let checkDate = new Date(currentDate + 'T00:00:00');
-      while (true) {
-        const y = checkDate.getFullYear();
-        const m = String(checkDate.getMonth() + 1).padStart(2, '0');
-        const d = String(checkDate.getDate()).padStart(2, '0');
-        const key = `${y}-${m}-${d}`;
-        if (activeDates.includes(key)) {
-          streak++;
-          checkDate.setDate(checkDate.getDate() - 1);
-        } else {
-          break;
-        }
-      }
-
-      document.getElementById('streakBadge').textContent = `🔥 連續 ${Math.max(1, streak)} 天`;
-      document.getElementById('statStreakTotal').textContent = `累積訓練 ${activeDates.length} 天`;
+      const { finalStreak, totalActiveDays } = calculateCurrentStreak();
+      document.getElementById('streakBadge').innerHTML = `🔥 連續 ${finalStreak} 天 ✎`;
+      document.getElementById('statStreakTotal').textContent = `累積訓練 ${totalActiveDays} 天`;
     }
 
-    // ================== 趨勢曲線圖 (SVG) ==================
+    // 連勝手動設定 Modal
+    function openStreakModal() {
+      const { finalStreak } = calculateCurrentStreak();
+      manualStreakFloor = finalStreak;
+      document.getElementById('manualStreakVal').textContent = manualStreakFloor;
+      document.getElementById('streakModal').classList.remove('hidden');
+    }
+
+    function closeStreakModal() {
+      document.getElementById('streakModal').classList.add('hidden');
+    }
+
+    function adjManualStreak(delta) {
+      manualStreakFloor = Math.max(1, manualStreakFloor + delta);
+      document.getElementById('manualStreakVal').textContent = manualStreakFloor;
+    }
+
+    function saveManualStreak() {
+      saveToStorage();
+      updateStatsAndStreak();
+      closeStreakModal();
+      showToast(`🔥 已將連勝成就鎖定為連續 ${manualStreakFloor} 天！`);
+    }
+
     function setChartMode(mode) {
       chartMode = mode;
       const btnDaily = document.getElementById('chartModeDaily');
@@ -810,12 +915,12 @@
       const selBox = document.getElementById('chartExerciseSelectorBox');
 
       if (mode === 'daily') {
-        btnDaily.className = 'px-2.5 py-1 rounded-md bg-cyan-600 text-white font-medium';
-        btnEx.className = 'px-2.5 py-1 rounded-md text-slate-400 hover:text-white';
+        btnDaily.className = 'px-3 py-2 rounded-lg bg-cyan-600 text-white font-bold';
+        btnEx.className = 'px-3 py-2 rounded-lg text-slate-400 hover:text-white font-bold';
         selBox.classList.add('hidden');
       } else {
-        btnEx.className = 'px-2.5 py-1 rounded-md bg-cyan-600 text-white font-medium';
-        btnDaily.className = 'px-2.5 py-1 rounded-md text-slate-400 hover:text-white';
+        btnEx.className = 'px-3 py-2 rounded-lg bg-cyan-600 text-white font-bold';
+        btnDaily.className = 'px-3 py-2 rounded-lg text-slate-400 hover:text-white font-bold';
         selBox.classList.remove('hidden');
       }
       renderProgressChart();
@@ -837,9 +942,8 @@
         return x && ((x.gym && x.gym.length > 0) || (x.cardio && x.cardio.length > 0));
       }).sort();
 
-      // 渲染歷史日期快速跳轉按鈕
       document.getElementById('historyDateChips').innerHTML = activeDates.map(d =>
-        `<button onclick="jumpToDate('${d}')" class="text-xs px-2.5 py-1 rounded-lg border ${d === currentDate ? 'bg-cyan-600 border-cyan-500 text-white font-bold' : 'bg-slate-950 border-slate-800 text-slate-300 hover:border-slate-600'}">${d.slice(5)}</button>`
+        `<button onclick="jumpToDate('${d}')" class="text-sm px-3.5 py-2 rounded-xl border font-bold ${d === currentDate ? 'bg-cyan-600 border-cyan-500 text-white' : 'bg-slate-950 border-slate-800 text-slate-300'}">${d.slice(5)}</button>`
       ).join('');
 
       let points = [];
@@ -883,7 +987,7 @@
       }
 
       if (points.length === 0) {
-        container.innerHTML = `<div class="text-xs text-slate-500">尚無足夠的重訓數據可繪製曲線圖</div>`;
+        container.innerHTML = `<div class="text-sm text-slate-500">尚無足夠的重訓數據可繪製曲線圖</div>`;
         return;
       }
 
@@ -908,28 +1012,24 @@
               <stop offset="100%" stop-color="#06b6d4" stop-opacity="0.0"/>
             </linearGradient>
           </defs>
-          <!-- 格線 -->
           <line x1="${padL}" y1="${padT}" x2="${w-padR}" y2="${padT}" stroke="#1e293b" stroke-dasharray="3"/>
           <line x1="${padL}" y1="${(padT+h-padB)/2}" x2="${w-padR}" y2="${(padT+h-padB)/2}" stroke="#1e293b" stroke-dasharray="3"/>
           <line x1="${padL}" y1="${h-padB}" x2="${w-padR}" y2="${h-padB}" stroke="#334155"/>
 
-          <!-- 面積與折線 -->
           ${coords.length > 1 ? `<polygon points="${areaPoints}" fill="url(#lineGrad)"/>` : ''}
-          ${coords.length > 1 ? `<polyline fill="none" stroke="#22d3ee" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" points="${polylinePoints}"/>` : ''}
+          ${coords.length > 1 ? `<polyline fill="none" stroke="#22d3ee" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round" points="${polylinePoints}"/>` : ''}
 
-          <!-- 節點與數值標籤 -->
           ${coords.map(c => `
             <g>
-              <circle cx="${c.x}" cy="${c.y}" r="5" fill="#0f172a" stroke="#10b981" stroke-width="3"/>
-              <text x="${c.x}" y="${c.y - 10}" text-anchor="middle" fill="#e2e8f0" font-size="11" font-weight="bold">${c.value}</text>
-              <text x="${c.x}" y="${h - 12}" text-anchor="middle" fill="#94a3b8" font-size="10">${c.label}</text>
+              <circle cx="${c.x}" cy="${c.y}" r="6" fill="#0f172a" stroke="#10b981" stroke-width="3.5"/>
+              <text x="${c.x}" y="${c.y - 11}" text-anchor="middle" fill="#e2e8f0" font-size="12" font-weight="bold">${c.value}</text>
+              <text x="${c.x}" y="${h - 10}" text-anchor="middle" fill="#94a3b8" font-size="11">${c.label}</text>
             </g>
           `).join('')}
         </svg>
       `;
     }
 
-    // ================== 日期與分頁切換 ==================
     function changeDate(delta) {
       const d = new Date(currentDate + 'T00:00:00');
       d.setDate(d.getDate() + delta);
@@ -959,22 +1059,32 @@
       const btns = { gym: 'tabBtnGym', cardio: 'tabBtnCardio', chart: 'tabBtnChart' };
       Object.keys(panels).forEach(k => {
         document.getElementById(panels[k]).classList.toggle('hidden', k !== tab);
-        document.getElementById(btns[k]).className = (k === tab)
-          ? 'py-2 rounded-lg bg-emerald-600 text-white shadow transition'
-          : 'py-2 rounded-lg text-slate-400 hover:text-white transition';
+        document.getElementById(btns[k]).classList.className = (k === tab)
+          ? 'py-3 rounded-xl bg-emerald-600 text-white shadow transition'
+          : 'py-3 rounded-xl text-slate-400 hover:text-white transition';
       });
       if (tab === 'chart') renderProgressChart();
     }
 
-    // ================== 組間休息計時器 ==================
+    // ================== 升級版組間休息計時器 (加減秒數 + 彈窗提醒) ==================
     let timerSeconds = 90;
     let timerDefault = 90;
     let timerInterval = null;
+    let alarmRepeatInterval = null;
 
     function updateTimerDisplay() {
       const m = String(Math.floor(timerSeconds / 60)).padStart(2, '0');
       const s = String(timerSeconds % 60).padStart(2, '0');
       document.getElementById('timerDisplay').textContent = `${m}:${s}`;
+    }
+
+    // 按加減號調整時鐘秒數 (支援到 900秒 = 15分鐘)
+    function adjustTimerSeconds(delta) {
+      timerSeconds = Math.min(900, Math.max(10, timerSeconds + delta));
+      if (!timerInterval) {
+        timerDefault = timerSeconds;
+      }
+      updateTimerDisplay();
     }
 
     function setTimerPreset(sec) {
@@ -985,6 +1095,7 @@
     }
 
     function startTimerFromZero() {
+      stopAlarmLoop();
       clearInterval(timerInterval);
       timerInterval = null;
       timerSeconds = timerDefault;
@@ -994,6 +1105,7 @@
     }
 
     function toggleTimer() {
+      stopAlarmLoop();
       const btn = document.getElementById('timerBtn');
       const box = document.getElementById('timerBox');
       box.classList.remove('timer-done');
@@ -1013,20 +1125,59 @@
             timerInterval = null;
             btn.textContent = '開始';
             box.classList.add('timer-done');
-            playBeep();
-            showToast('⏰ 組間休息結束！準備開始下一組！');
+            triggerTimerFinishedPopup();
           }
         }, 1000);
       }
     }
 
     function resetTimer() {
+      stopAlarmLoop();
       clearInterval(timerInterval);
       timerInterval = null;
       timerSeconds = timerDefault;
       document.getElementById('timerBtn').textContent = '開始';
       document.getElementById('timerBox').classList.remove('timer-done');
       updateTimerDisplay();
+    }
+
+    // 觸發碼表結束全螢幕提醒視窗 + 連續提示音 + 手機震動
+    function triggerTimerFinishedPopup() {
+      const modal = document.getElementById('timerAlertModal');
+      modal.classList.remove('hidden');
+      playBeep();
+      if (navigator.vibrate) {
+        navigator.vibrate([300, 150, 300, 150, 400]);
+      }
+      // 每 3 秒重複響一次提醒音，直到使用者點擊關閉或再休30秒
+      alarmRepeatInterval = setInterval(() => {
+        playBeep();
+        if (navigator.vibrate) navigator.vibrate([250, 100, 250]);
+      }, 3000);
+    }
+
+    function stopAlarmLoop() {
+      if (alarmRepeatInterval) {
+        clearInterval(alarmRepeatInterval);
+        alarmRepeatInterval = null;
+      }
+    }
+
+    function dismissTimerAlert() {
+      stopAlarmLoop();
+      document.getElementById('timerAlertModal').classList.add('hidden');
+      document.getElementById('timerBox').classList.remove('timer-done');
+      timerSeconds = timerDefault;
+      updateTimerDisplay();
+    }
+
+    function addExtraRestAndClose(extraSec) {
+      stopAlarmLoop();
+      document.getElementById('timerAlertModal').classList.add('hidden');
+      document.getElementById('timerBox').classList.remove('timer-done');
+      timerSeconds = extraSec;
+      updateTimerDisplay();
+      toggleTimer();
     }
 
     function playBeep() {
@@ -1036,25 +1187,23 @@
           const osc = ctx.createOscillator();
           const gain = ctx.createGain();
           osc.frequency.value = 880;
-          gain.gain.value = 0.15;
+          gain.gain.value = 0.2;
           osc.connect(gain);
           gain.connect(ctx.destination);
           osc.start(ctx.currentTime + delay);
-          osc.stop(ctx.currentTime + delay + 0.12);
+          osc.stop(ctx.currentTime + delay + 0.14);
         });
       } catch(e) {}
     }
 
-    // ================== 複製純文字日報 ==================
     function copyDailyReport() {
       const dayData = allLogs[currentDate] || { gym: [], cardio: [] };
       const weekday = document.getElementById('weekdayLabel').textContent;
-      const streakText = document.getElementById('streakBadge').textContent;
-      const totalDaysText = document.getElementById('statStreakTotal').textContent;
+      const { finalStreak, totalActiveDays } = calculateCurrentStreak();
 
       let lines = [
         `📅 健訓筆記：${currentDate} ${weekday}`,
-        `${streakText} (${totalDaysText})`,
+        `🔥 持續訓練：連續 ${finalStreak} 天 (累積訓練 ${totalActiveDays} 天)`,
         `────────────────────`
       ];
 
@@ -1093,7 +1242,6 @@
       });
     }
 
-    // ================== 備份與還原 ==================
     function openBackupModal() { document.getElementById('backupModal').classList.remove('hidden'); }
     function closeBackupModal() { document.getElementById('backupModal').classList.add('hidden'); }
 
