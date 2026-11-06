@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>Pro 健訓器材筆記本 v2.4</title>
+  <title>Pro 健訓器材筆記本 v2.5</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <script>
     tailwind.config = {
@@ -65,7 +65,7 @@
           <button onclick="changeDate(1)" class="w-10 h-9 flex items-center justify-center rounded-lg bg-slate-800/80 active:bg-slate-700 text-slate-200 text-sm font-bold shrink-0">▶</button>
         </div>
 
-        <!-- 智慧組間計時器 -->
+        <!-- 智慧組間計時器 (台北標準時間真實時間差防凍結版) -->
         <div id="timerBox" class="bg-slate-850 border border-slate-800 rounded-xl p-2 transition-all space-y-1.5">
           <div class="flex items-center justify-between gap-1">
             <div class="flex items-center gap-1">
@@ -75,6 +75,7 @@
               <button onclick="adjustTimerSeconds(30)" class="h-9 px-2 rounded-lg bg-slate-800 active:bg-slate-700 text-slate-200 font-bold text-xs border border-slate-700 whitespace-nowrap">+30s</button>
             </div>
             <div class="flex items-center gap-1">
+              <span id="timerTargetClock" class="hidden sm:inline-block text-[10px] text-slate-400 font-mono mr-1"></span>
               <button onclick="toggleTimer()" id="timerBtn" class="h-9 px-3 rounded-lg bg-cyan-600 active:bg-cyan-500 text-white text-xs font-extrabold shadow whitespace-nowrap">開始</button>
               <button onclick="resetTimer()" class="h-9 w-9 flex items-center justify-center rounded-lg bg-slate-800 active:bg-slate-700 text-slate-300 font-bold border border-slate-700 text-sm shrink-0">↺</button>
             </div>
@@ -415,6 +416,7 @@
     const STORAGE_KEY_MEM_CARDIO = 'pro_gym_notebook_mem_cardio_v2';
     const STORAGE_KEY_CAT_MAP = 'pro_gym_notebook_categories_v2';
     const STORAGE_KEY_HIDDEN_EX = 'pro_gym_notebook_hidden_ex_v2';
+    const STORAGE_KEY_TIMER_STATE = 'pro_gym_notebook_timer_state_v2';
     const LB_TO_KG = 0.45359237;
 
     // 部位分項定義
@@ -499,6 +501,43 @@
     let exerciseCategories = {};
     let hiddenExercises = [];
 
+    // 取得台北標準時間 YYYY-MM-DD
+    function getTaipeiDateString(dateObj = new Date()) {
+      try {
+        const parts = new Intl.DateTimeFormat('en-CA', {
+          timeZone: 'Asia/Taipei',
+          year: 'numeric',
+          month: '2-digit',
+          day: '2-digit'
+        }).formatToParts(dateObj);
+        const y = parts.find(p => p.type === 'year').value;
+        const m = parts.find(p => p.type === 'month').value;
+        const d = parts.find(p => p.type === 'day').value;
+        return `${y}-${m}-${d}`;
+      } catch (e) {
+        const yyyy = dateObj.getFullYear();
+        const mm = String(dateObj.getMonth() + 1).padStart(2, '0');
+        const dd = String(dateObj.getDate()).padStart(2, '0');
+        return `${yyyy}-${mm}-${dd}`;
+      }
+    }
+
+    // 取得台北標準時間 HH:MM:SS 字串
+    function formatTaipeiTimeClock(timestampMs) {
+      try {
+        return new Intl.DateTimeFormat('zh-TW', {
+          timeZone: 'Asia/Taipei',
+          hour: '2-digit',
+          minute: '2-digit',
+          second: '2-digit',
+          hour12: false
+        }).format(new Date(timestampMs));
+      } catch (e) {
+        const d = new Date(timestampMs);
+        return d.toTimeString().slice(0, 8);
+      }
+    }
+
     function initApp() {
       const savedLogs = localStorage.getItem(STORAGE_KEY_LOGS);
       const savedGymMem = localStorage.getItem(STORAGE_KEY_MEM_GYM);
@@ -532,16 +571,13 @@
 
       rebuildMemoriesFromLogs();
 
-      const now = new Date();
-      const yyyy = now.getFullYear();
-      const mm = String(now.getMonth() + 1).padStart(2, '0');
-      const dd = String(now.getDate()).padStart(2, '0');
-      currentDate = `${yyyy}-${mm}-${dd}`;
+      currentDate = getTaipeiDateString();
       document.getElementById('datePicker').value = currentDate;
       document.getElementById('makeupDateInput').value = currentDate;
 
       resetSetsToDefault();
       renderAll();
+      restoreTimerStateFromStorage();
     }
 
     function guessCategoryByName(name) {
@@ -678,7 +714,7 @@
     function openEditExerciseModalFromInput() {
       const curName = document.getElementById('gymNameInput').value.trim();
       if (!curName) {
-        showToast('⚠️ 請先點選一個器材方格，或點方格右上角的「⚙」按鈕！');
+        showToast('⚠️ 請先點選一個器材方格，或點方格右上角的「✎」按鈕！');
         return;
       }
       openEditExerciseModal(curName);
@@ -697,7 +733,6 @@
         return;
       }
 
-      // 若有改名稱，同步更新歷史紀錄與記憶
       if (editingOriginalName && editingOriginalName !== newName) {
         Object.keys(allLogs).forEach(d => {
           (allLogs[d].gym || []).forEach(g => {
@@ -1058,7 +1093,6 @@
       document.getElementById('weekdayLabel').textContent = `(${days[d.getDay()]})`;
     }
 
-    // 🏋️ 器材大方格卡片：支援依部位篩選、顯示最高重量與右上角「⚙ 分項編輯鈕」
     function renderQuickButtons() {
       const defaultGym = Object.keys(DEFAULT_CATEGORY_MAP);
       const allGymNames = Array.from(new Set([...defaultGym, ...Object.keys(gymMemory), ...Object.keys(exerciseCategories)]))
@@ -1208,7 +1242,6 @@
         return `${y}-${m}-${d}`;
       };
 
-      // 若今天剛打開還沒輸入紀錄，從昨天開始誠實檢查是否連續；若昨天也沒練，連勝誠實歸 0
       if (!activeDates.includes(formatKey(checkDate))) {
         checkDate.setDate(checkDate.getDate() - 1);
       }
@@ -1253,7 +1286,6 @@
       document.getElementById('statStreakTotal').textContent = `累積訓練 ${totalActiveDays} 天`;
     }
 
-    // 誠實連勝與歷史訓練日補登/刪除管理器
     function openStreakModal() {
       renderLoggedDatesManager();
       document.getElementById('streakModal').classList.remove('hidden');
@@ -1464,24 +1496,114 @@
       if (tab === 'chart') renderProgressChart();
     }
 
-    // ================== 組間休息計時器 ==================
+    // ================== ⏱️ 升級版組間計時器：以真實時間戳記 (Timestamp) 計算經過時間 ==================
+    // 原理：紀錄開始時的絕對時間點與預計結束時間點 (timerEndTimestamp)，
+    // 即使跳出視窗、切換 App 或螢幕休眠，切回來時直接比對當下標準時間，絕不卡秒！
     let timerSeconds = 90;
     let timerDefault = 90;
+    let timerRunning = false;
+    let timerEndTimestamp = null; // 預計結束的標準時間毫秒數
     let timerInterval = null;
     let alarmRepeatInterval = null;
 
+    function saveTimerStateToStorage() {
+      localStorage.setItem(STORAGE_KEY_TIMER_STATE, JSON.stringify({
+        timerDefault,
+        timerSeconds,
+        timerRunning,
+        timerEndTimestamp
+      }));
+    }
+
+    function restoreTimerStateFromStorage() {
+      const raw = localStorage.getItem(STORAGE_KEY_TIMER_STATE);
+      if (!raw) {
+        updateTimerDisplay();
+        return;
+      }
+      try {
+        const st = JSON.parse(raw);
+        timerDefault = st.timerDefault || 90;
+        if (st.timerRunning && st.timerEndTimestamp) {
+          timerEndTimestamp = st.timerEndTimestamp;
+          const remain = Math.ceil((timerEndTimestamp - Date.now()) / 1000);
+          if (remain > 0) {
+            timerSeconds = remain;
+            timerRunning = true;
+            document.getElementById('timerBtn').textContent = '暫停';
+            document.getElementById('timerTargetClock').textContent = `(${formatTaipeiTimeClock(timerEndTimestamp)}到)`;
+            startBackgroundTick();
+          } else {
+            // 在離開畫面期間已經倒數結束
+            timerSeconds = 0;
+            timerRunning = false;
+            timerEndTimestamp = null;
+            saveTimerStateToStorage();
+            updateTimerDisplay();
+            triggerTimerFinishedPopup();
+          }
+        } else {
+          timerSeconds = st.timerSeconds || timerDefault;
+          timerRunning = false;
+          updateTimerDisplay();
+        }
+      } catch (e) {
+        updateTimerDisplay();
+      }
+    }
+
     function updateTimerDisplay() {
-      const m = String(Math.floor(timerSeconds / 60)).padStart(2, '0');
-      const s = String(timerSeconds % 60).padStart(2, '0');
+      const sec = Math.max(0, timerSeconds);
+      const m = String(Math.floor(sec / 60)).padStart(2, '0');
+      const s = String(sec % 60).padStart(2, '0');
       document.getElementById('timerDisplay').textContent = `${m}:${s}`;
     }
 
-    function adjustTimerSeconds(delta) {
-      timerSeconds = Math.min(900, Math.max(10, timerSeconds + delta));
-      if (!timerInterval) {
-        timerDefault = timerSeconds;
+    // 核心同步函式：用當下真實時間與目標時間點相減
+    function syncTimerWithRealClock() {
+      if (!timerRunning || !timerEndTimestamp) return;
+      const diffMs = timerEndTimestamp - Date.now();
+      const remainSec = Math.ceil(diffMs / 1000);
+
+      if (remainSec > 0) {
+        timerSeconds = remainSec;
+        updateTimerDisplay();
+      } else {
+        timerSeconds = 0;
+        timerRunning = false;
+        timerEndTimestamp = null;
+        clearInterval(timerInterval);
+        timerInterval = null;
+        document.getElementById('timerBtn').textContent = '開始';
+        document.getElementById('timerTargetClock').textContent = '';
+        document.getElementById('timerBox').classList.add('timer-done');
+        saveTimerStateToStorage();
+        updateTimerDisplay();
+        triggerTimerFinishedPopup();
       }
-      updateTimerDisplay();
+    }
+
+    function startBackgroundTick() {
+      if (timerInterval) clearInterval(timerInterval);
+      // 每 250ms 比對一次標準時間，確保切回視窗瞬間刷新
+      timerInterval = setInterval(syncTimerWithRealClock, 250);
+    }
+
+    function adjustTimerSeconds(delta) {
+      if (timerRunning && timerEndTimestamp) {
+        // 運行中按加減號，直接推移目標結束時間點
+        timerEndTimestamp += delta * 1000;
+        const minTarget = Date.now() + 5000;
+        const maxTarget = Date.now() + 900 * 1000;
+        timerEndTimestamp = Math.min(maxTarget, Math.max(minTarget, timerEndTimestamp));
+        document.getElementById('timerTargetClock').textContent = `(${formatTaipeiTimeClock(timerEndTimestamp)}到)`;
+        syncTimerWithRealClock();
+      } else {
+        timerSeconds = Math.min(900, Math.max(10, timerSeconds + delta));
+        timerDefault = timerSeconds;
+        updateTimerDisplay();
+      }
+      saveTimerStateToStorage();
     }
 
     function setTimerPreset(sec) {
@@ -1493,9 +1615,11 @@
 
     function startTimerFromZero() {
       stopAlarmLoop();
-      clearInterval(timerInterval);
+      if (timerInterval) clearInterval(timerInterval);
       timerInterval = null;
       timerSeconds = timerDefault;
+      timerRunning = false;
+      timerEndTimestamp = null;
       document.getElementById('timerBox').classList.remove('timer-done');
       updateTimerDisplay();
       toggleTimer();
@@ -1505,38 +1629,54 @@
       stopAlarmLoop();
       const btn = document.getElementById('timerBtn');
       const box = document.getElementById('timerBox');
+      const clockHint = document.getElementById('timerTargetClock');
       box.classList.remove('timer-done');
 
-      if (timerInterval) {
-        clearInterval(timerInterval);
+      if (timerRunning) {
+        // 暫停：結算當下真實剩餘秒數並清除目標時間點
+        syncTimerWithRealClock();
+        timerRunning = false;
+        timerEndTimestamp = null;
+        if (timerInterval) clearInterval(timerInterval);
         timerInterval = null;
         btn.textContent = '開始';
+        clockHint.textContent = '';
+        saveTimerStateToStorage();
       } else {
+        // 開始：抓取當下標準時間 + 剩餘秒數 = 預計結束標準時間點
+        if (timerSeconds <= 0) timerSeconds = timerDefault;
+        timerRunning = true;
+        timerEndTimestamp = Date.now() + (timerSeconds * 1000);
         btn.textContent = '暫停';
-        timerInterval = setInterval(() => {
-          if (timerSeconds > 0) {
-            timerSeconds--;
-            updateTimerDisplay();
-          } else {
-            clearInterval(timerInterval);
-            timerInterval = null;
-            btn.textContent = '開始';
-            box.classList.add('timer-done');
-            triggerTimerFinishedPopup();
-          }
-        }, 1000);
+        clockHint.textContent = `(${formatTaipeiTimeClock(timerEndTimestamp)}到)`;
+        saveTimerStateToStorage();
+        startBackgroundTick();
       }
     }
 
     function resetTimer() {
       stopAlarmLoop();
-      clearInterval(timerInterval);
+      if (timerInterval) clearInterval(timerInterval);
       timerInterval = null;
+      timerRunning = false;
+      timerEndTimestamp = null;
       timerSeconds = timerDefault;
       document.getElementById('timerBtn').textContent = '開始';
+      document.getElementById('timerTargetClock').textContent = '';
       document.getElementById('timerBox').classList.remove('timer-done');
+      saveTimerStateToStorage();
       updateTimerDisplay();
     }
+
+    // 當使用者從別的視窗、LINE 或鎖屏切回瀏覽器時，立刻對時校正
+    document.addEventListener('visibilitychange', () => {
+      if (!document.hidden && timerRunning) {
+        syncTimerWithRealClock();
+      }
+    });
+    window.addEventListener('focus', () => {
+      if (timerRunning) syncTimerWithRealClock();
+    });
 
     function triggerTimerFinishedPopup() {
       const modal = document.getElementById('timerAlertModal');
@@ -1545,6 +1685,7 @@
       if (navigator.vibrate) {
         navigator.vibrate([300, 150, 300, 150, 400]);
       }
+      if (alarmRepeatInterval) clearInterval(alarmRepeatInterval);
       alarmRepeatInterval = setInterval(() => {
         playBeep();
         if (navigator.vibrate) navigator.vibrate([250, 100, 250]);
